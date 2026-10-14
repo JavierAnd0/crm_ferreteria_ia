@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: inventario-ferreteria
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/ferreteria?currentSchema=ferreteria&stringtype=unspecified}
+    username: ${DB_USER:ferreteria}
+    password: ${DB_PASSWORD:ferreteria}
+    hikari:
+      maximum-pool-size: ${DB_POOL:20}
+      # Las fechas de los filtros (desde/hasta) se interpretan en hora de Colombia.
+      connection-init-sql: SET TIME ZONE 'America/Bogota'
+  flyway:
+    schemas: ferreteria
+    default-schema: ferreteria
+    locations: classpath:db/migration
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+  jackson:
+    time-zone: America/Bogota
+    default-property-inclusion: non_null
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: always
+
+management:
+  endpoints.web.exposure.include: health,info
+  endpoint.health.probes.enabled: true
+
+springdoc:
+  swagger-ui.path: /swagger-ui.html
+
+app:
+  zona-horaria: America/Bogota
+  jwt:
+    secret: ${JWT_SECRET:cambie-esta-clave-de-desarrollo-de-al-menos-32-bytes}
+    horas-validez: 10
+  admin:
+    password: ${ADMIN_PASSWORD:}
+  reservas:
+    horas-vigencia: 72
+  integracion:
+    max-intentos: 8
+  cierre:
+    cron: "0 0 2 1 * *"
+
+logging:
+  level:
+    co.ferreteria: INFO
+---
+spring:
+  config.activate.on-profile: demo
+  flyway:
+    locations: classpath:db/migration,classpath:db/demo
