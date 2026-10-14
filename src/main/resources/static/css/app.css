@@ -1,0 +1,53 @@
+:root {
+  --fondo: #f5f7fa; --panel: #ffffff; --texto: #1d2733; --suave: #5b6b7d; --borde: #d6dde6;
+  --primario: #1f4e79; --primario-texto: #ffffff; --ok: #1e7b45; --error: #b42318; --aviso: #b54708;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --fondo: #12161c; --panel: #1b222c; --texto: #e6ebf1; --suave: #9aa8b8; --borde: #2e3a48;
+          --primario: #5b9bd5; --primario-texto: #0b1220; --ok: #4ac27f; --error: #f97066; --aviso: #fdb022; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--fondo); color: var(--texto); }
+.barra { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--primario); color: var(--primario-texto); position: sticky; top: 0; z-index: 2; }
+.barra .espacio { flex: 1; }
+.cuerpo { display: flex; min-height: calc(100vh - 52px); }
+nav { width: 220px; background: var(--panel); border-right: 1px solid var(--borde); padding: 8px; }
+nav a { display: block; padding: 9px 12px; border-radius: 6px; color: var(--texto); text-decoration: none; }
+nav a.activo, nav a:hover { background: var(--fondo); color: var(--primario); font-weight: 600; }
+main { flex: 1; padding: 20px; max-width: 1200px; min-width: 0; }
+h1 { font-size: 22px; margin: 0 0 16px; } h2 { font-size: 17px; margin: 22px 0 10px; }
+.panel { background: var(--panel); border: 1px solid var(--borde); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+.fila { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.fila > label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--suave); }
+input, select, textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); color: var(--texto); min-width: 0; }
+input:focus, select:focus, button:focus-visible { outline: 2px solid var(--primario); outline-offset: 1px; }
+button { font: inherit; padding: 8px 14px; border: 0; border-radius: 6px; background: var(--primario); color: var(--primario-texto); cursor: pointer; }
+button.secundario { background: transparent; color: inherit; border: 1px solid currentColor; }
+button.peligro { background: var(--error); color: #fff; }
+button.icono { background: transparent; color: inherit; font-size: 20px; padding: 2px 8px; }
+button:disabled { opacity: .5; cursor: default; }
+.tabla { width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--borde); vertical-align: top; }
+th { color: var(--suave); font-weight: 600; font-size: 13px; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.pastilla { font-size: 12px; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.18); }
+.pastilla.aviso { background: var(--aviso); color: #fff; }
+.ok { color: var(--ok); } .error { color: var(--error); } .suave { color: var(--suave); }
+.tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.tarjeta { background: var(--panel); border: 1px solid var(--borde); border-radius: 10px; padding: 14px; }
+.tarjeta .valor { font-size: 26px; font-weight: 700; }
+.total { font-size: 22px; font-weight: 700; text-align: right; }
+#aviso { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); max-width: 90vw; }
+#aviso div { background: var(--texto); color: var(--fondo); padding: 10px 16px; border-radius: 8px; margin-top: 6px; }
+#aviso div.error { background: var(--error); color: #fff; }
+.login { max-width: 360px; margin: 60px auto; }
+.login input { width: 100%; }
+pre { white-space: pre-wrap; word-break: break-word; font-size: 12px; margin: 0; }
+@media (max-width: 760px) {
+  nav { position: fixed; top: 52px; bottom: 0; left: 0; z-index: 3; box-shadow: 0 4px 20px rgba(0,0,0,.2); }
+  main { padding: 16px; }
+}
+@media (min-width: 761px) { #btn-menu { display: none; } nav[hidden] { display: block; } }
+@media print { .barra, nav, button { display: none !important; } main { padding: 0; } }
+body.sin-sesion nav, body.sin-sesion #btn-menu { display: none !important; }

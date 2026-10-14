@@ -1,0 +1,39 @@
+# Ejecución local o en un servidor: PostgreSQL 16 + la aplicación.
+#   cp .env.ejemplo .env   (y cambie las claves)
+#   docker compose up -d --build
+# Con datos de demostración: SPRING_PROFILES_ACTIVE=demo en .env
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ferreteria
+      POSTGRES_USER: ferreteria
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD en .env}
+      TZ: America/Bogota
+    volumes:
+      - datos-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ferreteria -d ferreteria"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  app:
+    build: .
+    image: ${IMAGEN:-inventario-ferreteria:local}
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/ferreteria?currentSchema=ferreteria&stringtype=unspecified
+      DB_USER: ferreteria
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET en .env (mínimo 32 caracteres)}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-default}
+    ports:
+      - "${PUERTO:-8080}:8080"
+    restart: unless-stopped
+
+volumes:
+  datos-postgres:

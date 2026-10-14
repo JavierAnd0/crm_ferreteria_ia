@@ -1,0 +1,105 @@
+# Integración y despliegue continuos.
+# - En cada PR y push: compila, corre las pruebas (PostgreSQL real con Testcontainers) y exige cobertura ≥ 65 %.
+# - En main: publica la imagen en GitHub Container Registry y, si hay servidor configurado, despliega.
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # En PR se cancela la ejecución anterior; en main nunca, para no cortar un despliegue a medias.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Compilar y probar
+        run: mvn -B verify
+      - name: Publicar reporte de pruebas y cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes
+          path: |
+            target/surefire-reports/
+            target/site/jacoco/
+
+  imagen:
+    needs: pruebas
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      imagen: ${{ steps.nombre.outputs.imagen }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: nombre
+        run: echo "imagen=ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.nombre.outputs.imagen }}
+            ghcr.io/${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  desplegar:
+    # Se activa creando en el repositorio la variable DESPLIEGUE_HABILITADO=true y los secretos
+    # SERVIDOR_HOST, SERVIDOR_USUARIO y SERVIDOR_LLAVE_SSH (ver docs/06-despliegue.md).
+    needs: imagen
+    if: vars.DESPLIEGUE_HABILITADO == 'true'
+    runs-on: ubuntu-latest
+    environment: produccion
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copiar docker-compose al servidor
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVIDOR_HOST }}
+          username: ${{ secrets.SERVIDOR_USUARIO }}
+          key: ${{ secrets.SERVIDOR_LLAVE_SSH }}
+          source: docker-compose.yml
+          target: /opt/inventario-ferreteria
+      - name: Actualizar la aplicación
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          IMAGEN: ${{ needs.imagen.outputs.imagen }}
+        with:
+          host: ${{ secrets.SERVIDOR_HOST }}
+          username: ${{ secrets.SERVIDOR_USUARIO }}
+          key: ${{ secrets.SERVIDOR_LLAVE_SSH }}
+          envs: IMAGEN
+          script: |
+            cd /opt/inventario-ferreteria
+            sed -i "s|^IMAGEN=.*||" .env && echo "IMAGEN=$IMAGEN" >> .env
+            docker compose pull app
+            docker compose up -d --no-build
+            for i in $(seq 1 30); do
+              [ "$(docker inspect -f '{{.State.Health.Status}}' $(docker compose ps -q app))" = healthy ] && exit 0
+              sleep 5
+            done
+            echo "La aplicación no quedó saludable" && docker compose logs --tail 100 app && exit 1

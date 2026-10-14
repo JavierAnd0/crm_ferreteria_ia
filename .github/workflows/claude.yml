@@ -1,0 +1,70 @@
+# Agentes de IA en GitHub.
+# 1) Asistente: mencione @claude en un issue o PR para pedir una explicación, un cambio o una revisión.
+# 2) Agente de funcionalidad: al poner la etiqueta "agente-ia" en un issue, Claude ejecuta el proceso completo
+#    (/funcionalidad) y abre un PR. CI corre las pruebas; una persona aprueba y fusiona; main se despliega sola.
+# Requiere el secreto ANTHROPIC_API_KEY y la GitHub App de Claude instalada (claude /install-github-app).
+name: Agentes IA
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+  actions: read
+
+jobs:
+  asistente:
+    if: >
+      (github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment')
+      && contains(github.event.comment.body, '@claude')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          additional_permissions: |
+            actions: read
+          claude_args: |
+            --max-turns 40
+
+  funcionalidad:
+    if: github.event_name == 'issues' && github.event.label.name == 'agente-ia'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            /funcionalidad Issue #${{ github.event.issue.number }} del repositorio ${{ github.repository }}:
+            ${{ github.event.issue.title }}
+
+            ${{ github.event.issue.body }}
+
+            Al terminar, comente en el issue el enlace del PR y el resumen de pruebas.
+          claude_args: |
+            --max-turns 150
