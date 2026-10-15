@@ -73,3 +73,12 @@ dialog.ventana .resumen strong { font-size: 17px; }
 .encabezado { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
 .encabezado h1 { margin: 0; flex: 1; }
 @media (max-width: 760px) { dialog.ventana, dialog.ventana.ancha { width: 100vw; max-width: 100vw; max-height: 92vh; margin: auto 0 0; border-radius: 12px 12px 0 0; } }
+a.boton { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 6px; background: var(--primario);
+  color: var(--primario-texto); text-decoration: none; }
+a.boton.secundario { background: transparent; color: var(--primario); border: 1px solid currentColor; }
+.con-boton { display: flex; gap: 6px; }
+.con-boton select { flex: 1; }
+fieldset.sin-borde { border: 0; padding: 0; margin: 0; }
+fieldset.roles { border: 1px solid var(--borde); border-radius: 8px; display: flex; flex-wrap: wrap; gap: 6px 14px; width: 100%; }
+fieldset.roles legend { font-size: 13px; color: var(--suave); }
+dialog.ventana form.fila + form.fila, dialog.ventana .tabla + form.fila { margin-top: 10px; }

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   faAddressBook, faBars, faBoxesStacked, faCalendarCheck, faCashRegister, faChartLine, faFileExcel,
   faFileInvoiceDollar, faHouse, faListOl, faRightFromBracket, faShieldHalved, faTriangleExclamation,
-  faTruckRampBox, faUsers, faWifi,
+  faTruckRampBox, faUsers, faWifi, faClipboardList, faPlug,
 } from '@fortawesome/free-solid-svg-icons';
 import { sesion } from './api.js';
 import { local, refrescarCatalogo, sincronizar } from './offline.js';
@@ -15,6 +15,7 @@ const MENU = [
   ['vender', 'Vender', faCashRegister, ['VENTA_EMITIR']],
   ['ventas', 'Facturas', faFileInvoiceDollar, ['VENTA_EMITIR', 'REPORTE_CONSULTAR']],
   ['comprar', 'Comprar', faTruckRampBox, ['COMPRA_REGISTRAR']],
+  ['compras', 'Compras registradas', faClipboardList, ['COMPRA_REGISTRAR', 'COSTO_VER']],
   ['productos', 'Productos y existencias', faBoxesStacked, []],
   ['terceros', 'Clientes y proveedores', faAddressBook, []],
   ['reservas', 'Reservas y dañados', faTriangleExclamation, ['RESERVA_GESTIONAR', 'ESTADO_DANADO']],
@@ -24,6 +25,7 @@ const MENU = [
   ['migracion', 'Migración Excel', faFileExcel, ['MIGRACION_EJECUTAR']],
   ['auditoria', 'Auditoría', faShieldHalved, ['AUDITORIA_CONSULTAR']],
   ['usuarios', 'Usuarios', faUsers, ['USUARIO_ADMINISTRAR']],
+  ['integraciones', 'Integraciones', faPlug, ['USUARIO_ADMINISTRAR']],
   ['offline', 'Sin internet', faWifi, ['VENTA_EMITIR']],
 ];
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { faLock, faLockOpen, faScaleBalanced } from '@fortawesome/free-solid-svg-icons';
 import { api, sesion } from '../api.js';
 import { dinero, fecha, num } from '../formato.js';
-import { Boton, Estado, Tabla, useAccion, useAvisar, useCarga } from '../componentes.jsx';
+import { Boton, Estado, Tabla, Ventana, useAccion, useAvisar, useCarga } from '../componentes.jsx';
 
 export default function Cierres() {
   const accion = useAccion();
@@ -37,9 +37,9 @@ export default function Cierres() {
               <Boton clase="secundario" data-a="saldos" icono={faScaleBalanced} onClick={() => verSaldos(f.id)}>Saldos</Boton>}
           </>} />
       </Estado>
-      {saldos && <div id="saldos"><h2>Saldos al cierre {saldos.id}</h2>
+      {saldos && <Ventana ancha titulo={`Saldos al cierre ${saldos.id}`} alCerrar={() => setSaldos(null)}><div id="saldos">
         <Tabla filas={saldos.filas} columnas={[['referencia', 'Referencia'], ['codigo_lote', 'Lote'], ['estado', 'Estado'],
-          ['cantidad', 'Cantidad', num, 'num'], ['costo_promedio', 'Costo', dinero, 'num'], ['valor_total', 'Valor', dinero, 'num']]} /></div>}
+          ['cantidad', 'Cantidad', num, 'num'], ['costo_promedio', 'Costo', dinero, 'num'], ['valor_total', 'Valor', dinero, 'num']]} /></div></Ventana>}
     </>
   );
 }

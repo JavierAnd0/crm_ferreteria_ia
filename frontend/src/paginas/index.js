@@ -4,6 +4,8 @@ import Inicio from './Inicio.jsx';
 import Vender from './Vender.jsx';
 import Ventas, { Factura } from './Ventas.jsx';
 import Comprar from './Comprar.jsx';
+import Compras from './Compras.jsx';
+import Integraciones from './Integraciones.jsx';
 import Productos from './Productos.jsx';
 import Terceros from './Terceros.jsx';
 import Reservas from './Reservas.jsx';
@@ -16,9 +18,9 @@ import Usuarios from './Usuarios.jsx';
 import Offline from './Offline.jsx';
 
 export const PAGINAS = {
-  login: Login, inicio: Inicio, vender: Vender, ventas: Ventas, comprar: Comprar, productos: Productos, terceros: Terceros,
+  login: Login, inicio: Inicio, vender: Vender, ventas: Ventas, comprar: Comprar, compras: Compras, productos: Productos, terceros: Terceros,
   reservas: Reservas, kardex: Kardex, cierres: Cierres, reportes: Reportes, migracion: Migracion, auditoria: Auditoria,
-  usuarios: Usuarios, offline: Offline,
+  usuarios: Usuarios, integraciones: Integraciones, offline: Offline,
 };
 
 /** Resuelve el componente de una ruta, incluida factura/{id}. */

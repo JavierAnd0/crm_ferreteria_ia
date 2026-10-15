@@ -988,15 +988,17 @@ Aplicación de una sola página en React (`frontend/src/App.jsx`) con enrutador 
 | Vender (`vender`) | `VENTA_EMITIR` | Vendedor | Punto de venta con lector: cliente, forma de pago, líneas con unidad y cantidad, total con IVA; cae a modo sin internet. |
 | Facturas (`ventas`, `factura/{id}`) | `VENTA_EMITIR`, `REPORTE_CONSULTAR` | Vendedor, Gerencia | Lista por fechas, factura para imprimir y anulación con motivo. |
 | Comprar (`comprar`) | `COMPRA_REGISTRAR` | Compras | Proveedor, factura del proveedor, líneas por código con costo y lote. |
-| Productos y existencias (`productos`) | todos | Todos; edición Inventario | Búsqueda; al tocar un producto, ventana emergente con existencias, unidades, lotes, historial de precios y cambio de porcentaje; botón «Nuevo producto» que abre el alta en otra ventana. |
-| Clientes y proveedores (`terceros`) | todos | Vendedor, Compras | Búsqueda y registro de terceros. |
+| Compras registradas (`compras`) | `COMPRA_REGISTRAR`, `COSTO_VER` | Compras, Gerencia | Ingresos por fechas; detalle en ventana y anulación con motivo (`COMPRA_ANULAR`). |
+| Productos y existencias (`productos`) | todos | Todos; edición Inventario | Búsqueda; al tocar un producto, ventana emergente con existencias, unidades (y alta de unidades), lotes, historial de precios, cambio de porcentaje y precio manual; botón «Nuevo producto» que abre el alta en otra ventana, con creación rápida de categoría y marca. |
+| Clientes y proveedores (`terceros`) | todos | Vendedor, Compras | Búsqueda; alta y edición de terceros en ventana emergente. |
 | Reservas y dañados (`reservas`) | `RESERVA_GESTIONAR`, `ESTADO_DANADO` | Vendedor, Inventario | Reservas activas, nueva reserva, liberación y paso a dañado o recuperado. |
 | Kárdex (`kardex`) | `PRODUCTO_EDITAR`, `REPORTE_CONSULTAR` | Inventario, Gerencia | Movimientos por código y fechas con saldo y costo después de cada uno. |
 | Cierres mensuales (`cierres`) | todos | Inventario, Gerencia | Períodos, cierre manual, reapertura con motivo y saldos al cierre. |
 | Reportes (`reportes`) | `REPORTE_CONSULTAR` | Gerencia, Inventario | Ventas diarias y garantías; margen y valoración con `COSTO_VER`. |
 | Migración Excel (`migracion`) | `MIGRACION_EJECUTAR` | Administrador | Plantilla, carga con fecha de corte, revisión de errores y carga de filas válidas. |
 | Auditoría (`auditoria`) | `AUDITORIA_CONSULTAR` | Gerencia | Filtro por fechas, usuario, tabla y acción, con antes y después. |
-| Usuarios (`usuarios`) | `USUARIO_ADMINISTRAR` | Administrador | Alta con rol, activación y desactivación. |
+| Usuarios (`usuarios`) | `USUARIO_ADMINISTRAR` | Administrador | Alta y edición en ventana (roles, correo, nueva contraseña), activación y desactivación. |
+| Integraciones (`integraciones`) | `USUARIO_ADMINISTRAR` | Administrador | Sistemas externos y eventos enviados, con reintento de los que fallaron. |
 | Sin internet (`offline`) | `VENTA_EMITIR` | Vendedor; conflictos para Inventario y Gerencia | Elegir equipo, pedir bloque de 50 números, actualizar catálogo local, sincronizar y ver ventas pendientes y conflictos. |
 
 **Comportamiento PWA sin conexión.** `manifest.webmanifest` permite instalar la aplicación; el *service worker* (`sw.js`) guarda la interfaz con estrategia «red primero, caché si falla» y **nunca** guarda respuestas de `/api/`. Los datos para trabajar sin internet viven en `localStorage` (`offline.js`): catálogo, equipo, bloque de facturas y cola de ventas. La barra superior muestra «En línea» o «Sin internet» y el número de ventas por sincronizar; la sincronización se intenta al recuperar la red y cada 60 segundos. El lector de códigos funciona como teclado: el código seguido de Enter dispara la búsqueda, también contra la copia local.
