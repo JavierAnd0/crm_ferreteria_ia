@@ -28,7 +28,7 @@ await p.fill('#nuevo [name=presentacion]', 'Caja x 100');
 await p.fill('#nuevo [name=codigoBarras]', codigo);
 await p.fill('#nuevo [name=stockMinimo]', '5');
 if (process.env.FOTO) await p.screenshot({ path: process.env.FOTO + '-nuevo.png' });
-await p.click('#nuevo button'); await p.waitForTimeout(1200);
+await p.click('#nuevo button:not([type=button])'); await p.waitForTimeout(1200);
 const filas = await p.locator('tbody tr').allInnerTexts();
 console.log('CREADO', filas.join(' / ').replace(/\t/g, ' '));
 if (!filas.some(f => f.includes(codigo))) throw new Error('El producto nuevo no aparece en la lista');

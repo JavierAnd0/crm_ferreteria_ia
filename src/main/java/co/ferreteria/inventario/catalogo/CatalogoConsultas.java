@@ -19,7 +19,7 @@ public class CatalogoConsultas {
                                     BigDecimal danada, BigDecimal precioVenta, BigDecimal porcentajeIva,
                                     BigDecimal porcentajeIncremento, BigDecimal costoPromedio, BigDecimal stockMinimo,
                                     boolean controlaVencimiento, boolean permiteFraccion, BigDecimal fraccionMinima,
-                                    Short mesesGarantia, boolean activo) {}
+                                    Short mesesGarantia, boolean activo, Integer productoId) {}
 
     public record UnidadReferencia(String unidad, BigDecimal factor, boolean usoCompra, boolean usoVenta) {}
 
@@ -36,7 +36,7 @@ public class CatalogoConsultas {
                    coalesce(sum(e.cantidad) FILTER (WHERE e.estado = 'DANADA'), 0) AS danada,
                    r.precio_venta, t.porcentaje AS porcentaje_iva, r.porcentaje_incremento, r.costo_promedio,
                    r.stock_minimo, p.controla_vencimiento, r.permite_fraccion, r.fraccion_minima, r.meses_garantia,
-                   r.activo AND p.activo AS activo
+                   r.activo AND p.activo AS activo, p.id AS producto_id
               FROM referencia r
               JOIN producto p ON p.id = r.producto_id
               JOIN marca m ON m.id = r.marca_id
@@ -113,6 +113,6 @@ public class CatalogoConsultas {
         return new ReferenciaResumen(r.id(), r.codigoBarras(), r.codigoInterno(), r.producto(), r.marca(), r.presentacion(),
                 r.unidadBase(), r.disponible(), r.reservada(), r.danada(), r.precioVenta(), r.porcentajeIva(),
                 r.porcentajeIncremento(), null, r.stockMinimo(), r.controlaVencimiento(), r.permiteFraccion(),
-                r.fraccionMinima(), r.mesesGarantia(), r.activo());
+                r.fraccionMinima(), r.mesesGarantia(), r.activo(), r.productoId());
     }
 }

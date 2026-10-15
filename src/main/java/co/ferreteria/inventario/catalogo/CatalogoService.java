@@ -59,8 +59,8 @@ public class CatalogoService {
         Producto p = productos.findById(productoId).orElseThrow(() -> new NoEncontradoException("Producto", productoId));
         Referencia ref = construir(r);
         p.agregar(ref);
-        productos.saveAndFlush(p);
-        return ref.getId();
+        // Se guarda la referencia misma: el merge en cascada del producto persistía una copia y dejaba ref sin id.
+        return referencias.saveAndFlush(ref).getId();
     }
 
     @Transactional

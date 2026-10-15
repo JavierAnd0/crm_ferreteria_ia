@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { faFloppyDisk, faMagnifyingGlass, faPercent, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faDollarSign, faFloppyDisk, faMagnifyingGlass, faPercent, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { api, sesion } from '../api.js';
 import { dinero, fecha, num, siNo } from '../formato.js';
 import { Boton, Campo, Estado, Tabla, Ventana, useAccion, useAvisar, useCarga, valores } from '../componentes.jsx';
 
 const opciones = (lista, k = 'id', t = 'nombre') => lista.map(x => <option key={x[k]} value={x[k]}>{x[t]}</option>);
 
-function Detalle({ id, alCambiarPrecio, alCerrar }) {
+function Detalle({ id, alCambiarPrecio, alCerrar, alAgregarPresentacion }) {
   const accion = useAccion();
   const avisar = useAvisar();
   const [d, recargarDetalle, error] = useCarga(async () => {
@@ -19,10 +19,26 @@ function Detalle({ id, alCambiarPrecio, alCerrar }) {
     avisar(`Nuevo precio sin IVA: ${dinero(r.precioVenta)}`);
     alCambiarPrecio(); recargarDetalle(); setPct('');
   });
+  const precioManual = accion(async e => {
+    e.preventDefault();
+    const v = valores(e.target);
+    await api(`/api/referencias/${id}/precio/manual`, { metodo: 'PUT', cuerpo: { precio: Number(v.precio), motivo: v.motivo } });
+    avisar('Precio fijado'); e.target.reset(); alCambiarPrecio(); recargarDetalle();
+  });
+  const [unidades] = useCarga(() => sesion.puede('PRODUCTO_EDITAR') ? api('/api/catalogo/maestros').then(m => m.unidades) : []);
+  const agregarUnidad = accion(async e => {
+    e.preventDefault();
+    const f = e.target, v = valores(f);
+    await api(`/api/referencias/${id}/conversiones`, { metodo: 'POST', cuerpo: { unidad: v.unidad, factor: Number(v.factor),
+      usoCompra: f.usoCompra.checked, usoVenta: f.usoVenta.checked } });
+    avisar(`Unidad ${v.unidad} agregada`); f.reset(); recargarDetalle();
+  });
   return (
     <Ventana ancha titulo={d ? `${d.referencia.producto} ${d.referencia.marca} ${d.referencia.presentacion}` : 'Producto'} alCerrar={alCerrar}>
       <Estado datos={d} error={error}>{d && <>
-      <p className="suave">Código {d.referencia.codigoBarras} · interno {d.referencia.codigoInterno} · unidad base {d.referencia.unidadBase}</p>
+      <div className="fila"><p className="suave espacio">Código {d.referencia.codigoBarras} · interno {d.referencia.codigoInterno} · unidad base {d.referencia.unidadBase}</p>
+        {sesion.puede('PRODUCTO_EDITAR') && <Boton clase="secundario" data-a="presentacion" icono={faPlus}
+          onClick={() => alAgregarPresentacion({ id: d.referencia.productoId, nombre: d.referencia.producto })}>Agregar presentación</Boton>}</div>
       <div className="resumen">
         <div><small>Disponible</small><strong>{num(d.referencia.disponible)}</strong></div>
         <div><small>Reservada</small><strong>{num(d.referencia.reservada)}</strong></div>
@@ -33,6 +49,12 @@ function Detalle({ id, alCambiarPrecio, alCerrar }) {
       </div>
       <h2>Unidades</h2>
       <Tabla filas={d.unidades} columnas={[['unidad', 'Unidad'], ['factor', 'Factor a base', num, 'num'], ['usoCompra', 'Compra', siNo], ['usoVenta', 'Venta', siNo]]} />
+      {sesion.puede('PRODUCTO_EDITAR') && unidades && <form className="fila" id="unidad" onSubmit={agregarUnidad}>
+        <Campo etiqueta="Agregar unidad"><select name="unidad">{opciones(unidades.filter(u => !d.unidades.some(x => x.unidad === u.codigo)), 'codigo', 'codigo')}</select></Campo>
+        <Campo etiqueta={`Equivale a (${d.referencia.unidadBase})`}><input name="factor" type="number" step="any" min="0" required style={{ width: 110 }} /></Campo>
+        <label><span><input type="checkbox" name="usoCompra" defaultChecked /> Compra</span></label>
+        <label><span><input type="checkbox" name="usoVenta" defaultChecked /> Venta</span></label>
+        <Boton clase="secundario" icono={faPlus}>Agregar</Boton></form>}
       <h2>Lotes</h2>
       <Tabla filas={d.lotes} columnas={[['codigoLote', 'Lote'], ['fechaVencimiento', 'Vence', fecha], ['disponible', 'Disponible', num, 'num'],
         ['reservada', 'Reservada', num, 'num'], ['danada', 'Dañada', num, 'num']]} />
@@ -42,34 +64,58 @@ function Detalle({ id, alCambiarPrecio, alCerrar }) {
       {sesion.puede('PRECIO_CAMBIAR') && <div className="fila">
         <Campo etiqueta="Nuevo % de incremento"><input name="pct" type="number" step="any" value={pct} onChange={e => setPct(e.target.value)} /></Campo>
         <Boton data-a="pct" icono={faPercent} onClick={aplicar}>Aplicar</Boton></div>}
+      {sesion.puede('PRECIO_CAMBIAR') && <form className="fila" id="precio-manual" onSubmit={precioManual}>
+        <Campo etiqueta="Precio manual sin IVA"><input name="precio" type="number" step="any" min="0" required style={{ width: 130 }} /></Campo>
+        <Campo etiqueta="Motivo"><input name="motivo" required size={24} /></Campo>
+        <Boton clase="secundario" icono={faDollarSign}>Fijar precio</Boton></form>}
     </>}</Estado></Ventana>
   );
 }
 
-function NuevoProducto({ alGuardar, alCerrar }) {
+/** Alta de un producto nuevo o, si llega `producto`, de otra presentación (marca, empaque) de ese producto. */
+function NuevoProducto({ producto, alGuardar, alCerrar }) {
   const accion = useAccion();
   const avisar = useAvisar();
-  const [maestros] = useCarga(() => api('/api/catalogo/maestros'));
+  const [maestros, recargarMaestros] = useCarga(() => api('/api/catalogo/maestros'));
+  const crearMaestro = (ruta, pregunta) => accion(async () => {
+    const nombre = prompt(pregunta)?.trim();
+    if (!nombre) return;
+    await api(ruta, { metodo: 'POST', cuerpo: { nombre } });
+    avisar(`«${nombre}» agregada`); recargarMaestros();
+  });
   const guardar = accion(async e => {
     e.preventDefault();
     const v = valores(e.target);
     const fraccion = Number(v.fraccionMinima || 1);
-    await api('/api/productos', { metodo: 'POST', cuerpo: { codigoInterno: v.codigoInterno, nombre: v.nombre, categoriaId: Number(v.categoriaId),
-      controlaVencimiento: v.vence === 'true', referencias: [{ marcaId: Number(v.marcaId), presentacion: v.presentacion,
-        codigoBarras: v.codigoBarras, unidadBase: v.unidadBase, permiteFraccion: fraccion !== 1, fraccionMinima: fraccion,
-        mesesGarantia: v.mesesGarantia ? Number(v.mesesGarantia) : null, tarifa: v.tarifa, porcentajeIncremento: Number(v.porcentajeIncremento),
-        stockMinimo: v.stockMinimo ? Number(v.stockMinimo) : null,
-        conversiones: v.unidadAlterna ? [{ unidad: v.unidadAlterna, factor: Number(v.factor), usoCompra: true, usoVenta: true }] : [] }] } });
-    avisar('Producto registrado'); alGuardar(v.codigoBarras);
+    const referencia = { marcaId: Number(v.marcaId), presentacion: v.presentacion,
+      codigoBarras: v.codigoBarras, unidadBase: v.unidadBase, permiteFraccion: fraccion !== 1, fraccionMinima: fraccion,
+      mesesGarantia: v.mesesGarantia ? Number(v.mesesGarantia) : null, tarifa: v.tarifa, porcentajeIncremento: Number(v.porcentajeIncremento),
+      stockMinimo: v.stockMinimo ? Number(v.stockMinimo) : null,
+      conversiones: v.unidadAlterna ? [{ unidad: v.unidadAlterna, factor: Number(v.factor), usoCompra: true, usoVenta: true }] : [] };
+    if (producto) {
+      await api(`/api/productos/${producto.id}/referencias`, { metodo: 'POST', cuerpo: referencia });
+      avisar('Presentación agregada');
+    } else {
+      await api('/api/productos', { metodo: 'POST', cuerpo: { codigoInterno: v.codigoInterno, nombre: v.nombre, categoriaId: Number(v.categoriaId),
+        controlaVencimiento: v.vence === 'true', referencias: [referencia] } });
+      avisar('Producto registrado');
+    }
+    alGuardar(v.codigoBarras);
   });
   return (
-    <Ventana titulo="Nuevo producto" alCerrar={alCerrar}>{maestros && (
+    <Ventana titulo={producto ? `Otra presentación de ${producto.nombre}` : 'Nuevo producto'} alCerrar={alCerrar}>{maestros && (
       <form className="fila" id="nuevo" onSubmit={guardar}>
+        {!producto && <>
         <Campo etiqueta="Código interno"><input name="codigoInterno" required /></Campo>
         <Campo etiqueta="Nombre"><input name="nombre" required /></Campo>
-        <Campo etiqueta="Categoría"><select name="categoriaId">{opciones(maestros.categorias)}</select></Campo>
+        <Campo etiqueta="Categoría"><span className="con-boton"><select name="categoriaId">{opciones(maestros.categorias)}</select>
+          <Boton type="button" clase="secundario" icono={faPlus} title="Nueva categoría" aria-label="Nueva categoría"
+            onClick={crearMaestro('/api/categorias', 'Nombre de la nueva categoría')} /></span></Campo>
         <Campo etiqueta="Controla vencimiento"><select name="vence"><option value="false">No</option><option value="true">Sí</option></select></Campo>
-        <Campo etiqueta="Marca"><select name="marcaId">{opciones(maestros.marcas)}</select></Campo>
+        </>}
+        <Campo etiqueta="Marca"><span className="con-boton"><select name="marcaId">{opciones(maestros.marcas)}</select>
+          <Boton type="button" clase="secundario" icono={faPlus} title="Nueva marca" aria-label="Nueva marca"
+            onClick={crearMaestro('/api/marcas', 'Nombre de la nueva marca')} /></span></Campo>
         <Campo etiqueta="Presentación"><input name="presentacion" required /></Campo>
         <Campo etiqueta="Código de barras"><input name="codigoBarras" required /></Campo>
         <Campo etiqueta="Unidad base"><select name="unidadBase">{opciones(maestros.unidades, 'codigo', 'codigo')}</select></Campo>
@@ -111,8 +157,9 @@ export default function Productos() {
           ['precioVenta', 'Precio sin IVA', dinero, 'num'], ['costoPromedio', 'Costo prom.', dinero, 'num'],
           ['mesesGarantia', 'Garantía', v => v ? `${v} meses` : ''], ['controlaVencimiento', 'Vence', siNo]]} />
       </Estado>
-      {seleccion && <Detalle key={seleccion} id={seleccion} alCambiarPrecio={recargar} alCerrar={() => setSeleccion(null)} />}
-      {creando && <NuevoProducto alCerrar={() => setCreando(false)}
+      {seleccion && <Detalle key={seleccion} id={seleccion} alCambiarPrecio={recargar} alCerrar={() => setSeleccion(null)}
+        alAgregarPresentacion={producto => { setSeleccion(null); setCreando(producto); }} />}
+      {creando && <NuevoProducto producto={creando === true ? null : creando} alCerrar={() => setCreando(false)}
         alGuardar={codigo => { setCreando(false); setQ(codigo); setConsulta({ q: codigo, bajo: false }); }} />}
     </>
   );
