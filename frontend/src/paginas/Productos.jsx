@@ -6,7 +6,7 @@ import { Boton, Campo, Estado, Tabla, Ventana, useAccion, useAvisar, useCarga, v
 
 const opciones = (lista, k = 'id', t = 'nombre') => lista.map(x => <option key={x[k]} value={x[k]}>{x[t]}</option>);
 
-function Detalle({ id, alCambiarPrecio, alCerrar }) {
+function Detalle({ id, alCambiarPrecio, alCerrar, alAgregarPresentacion }) {
   const accion = useAccion();
   const avisar = useAvisar();
   const [d, recargarDetalle, error] = useCarga(async () => {
@@ -36,7 +36,9 @@ function Detalle({ id, alCambiarPrecio, alCerrar }) {
   return (
     <Ventana ancha titulo={d ? `${d.referencia.producto} ${d.referencia.marca} ${d.referencia.presentacion}` : 'Producto'} alCerrar={alCerrar}>
       <Estado datos={d} error={error}>{d && <>
-      <p className="suave">Código {d.referencia.codigoBarras} · interno {d.referencia.codigoInterno} · unidad base {d.referencia.unidadBase}</p>
+      <div className="fila"><p className="suave espacio">Código {d.referencia.codigoBarras} · interno {d.referencia.codigoInterno} · unidad base {d.referencia.unidadBase}</p>
+        {sesion.puede('PRODUCTO_EDITAR') && <Boton clase="secundario" data-a="presentacion" icono={faPlus}
+          onClick={() => alAgregarPresentacion({ id: d.referencia.productoId, nombre: d.referencia.producto })}>Agregar presentación</Boton>}</div>
       <div className="resumen">
         <div><small>Disponible</small><strong>{num(d.referencia.disponible)}</strong></div>
         <div><small>Reservada</small><strong>{num(d.referencia.reservada)}</strong></div>
@@ -70,7 +72,8 @@ function Detalle({ id, alCambiarPrecio, alCerrar }) {
   );
 }
 
-function NuevoProducto({ alGuardar, alCerrar }) {
+/** Alta de un producto nuevo o, si llega `producto`, de otra presentación (marca, empaque) de ese producto. */
+function NuevoProducto({ producto, alGuardar, alCerrar }) {
   const accion = useAccion();
   const avisar = useAvisar();
   const [maestros, recargarMaestros] = useCarga(() => api('/api/catalogo/maestros'));
@@ -84,23 +87,32 @@ function NuevoProducto({ alGuardar, alCerrar }) {
     e.preventDefault();
     const v = valores(e.target);
     const fraccion = Number(v.fraccionMinima || 1);
-    await api('/api/productos', { metodo: 'POST', cuerpo: { codigoInterno: v.codigoInterno, nombre: v.nombre, categoriaId: Number(v.categoriaId),
-      controlaVencimiento: v.vence === 'true', referencias: [{ marcaId: Number(v.marcaId), presentacion: v.presentacion,
-        codigoBarras: v.codigoBarras, unidadBase: v.unidadBase, permiteFraccion: fraccion !== 1, fraccionMinima: fraccion,
-        mesesGarantia: v.mesesGarantia ? Number(v.mesesGarantia) : null, tarifa: v.tarifa, porcentajeIncremento: Number(v.porcentajeIncremento),
-        stockMinimo: v.stockMinimo ? Number(v.stockMinimo) : null,
-        conversiones: v.unidadAlterna ? [{ unidad: v.unidadAlterna, factor: Number(v.factor), usoCompra: true, usoVenta: true }] : [] }] } });
-    avisar('Producto registrado'); alGuardar(v.codigoBarras);
+    const referencia = { marcaId: Number(v.marcaId), presentacion: v.presentacion,
+      codigoBarras: v.codigoBarras, unidadBase: v.unidadBase, permiteFraccion: fraccion !== 1, fraccionMinima: fraccion,
+      mesesGarantia: v.mesesGarantia ? Number(v.mesesGarantia) : null, tarifa: v.tarifa, porcentajeIncremento: Number(v.porcentajeIncremento),
+      stockMinimo: v.stockMinimo ? Number(v.stockMinimo) : null,
+      conversiones: v.unidadAlterna ? [{ unidad: v.unidadAlterna, factor: Number(v.factor), usoCompra: true, usoVenta: true }] : [] };
+    if (producto) {
+      await api(`/api/productos/${producto.id}/referencias`, { metodo: 'POST', cuerpo: referencia });
+      avisar('Presentación agregada');
+    } else {
+      await api('/api/productos', { metodo: 'POST', cuerpo: { codigoInterno: v.codigoInterno, nombre: v.nombre, categoriaId: Number(v.categoriaId),
+        controlaVencimiento: v.vence === 'true', referencias: [referencia] } });
+      avisar('Producto registrado');
+    }
+    alGuardar(v.codigoBarras);
   });
   return (
-    <Ventana titulo="Nuevo producto" alCerrar={alCerrar}>{maestros && (
+    <Ventana titulo={producto ? `Otra presentación de ${producto.nombre}` : 'Nuevo producto'} alCerrar={alCerrar}>{maestros && (
       <form className="fila" id="nuevo" onSubmit={guardar}>
+        {!producto && <>
         <Campo etiqueta="Código interno"><input name="codigoInterno" required /></Campo>
         <Campo etiqueta="Nombre"><input name="nombre" required /></Campo>
         <Campo etiqueta="Categoría"><span className="con-boton"><select name="categoriaId">{opciones(maestros.categorias)}</select>
           <Boton type="button" clase="secundario" icono={faPlus} title="Nueva categoría" aria-label="Nueva categoría"
             onClick={crearMaestro('/api/categorias', 'Nombre de la nueva categoría')} /></span></Campo>
         <Campo etiqueta="Controla vencimiento"><select name="vence"><option value="false">No</option><option value="true">Sí</option></select></Campo>
+        </>}
         <Campo etiqueta="Marca"><span className="con-boton"><select name="marcaId">{opciones(maestros.marcas)}</select>
           <Boton type="button" clase="secundario" icono={faPlus} title="Nueva marca" aria-label="Nueva marca"
             onClick={crearMaestro('/api/marcas', 'Nombre de la nueva marca')} /></span></Campo>
@@ -145,8 +157,9 @@ export default function Productos() {
           ['precioVenta', 'Precio sin IVA', dinero, 'num'], ['costoPromedio', 'Costo prom.', dinero, 'num'],
           ['mesesGarantia', 'Garantía', v => v ? `${v} meses` : ''], ['controlaVencimiento', 'Vence', siNo]]} />
       </Estado>
-      {seleccion && <Detalle key={seleccion} id={seleccion} alCambiarPrecio={recargar} alCerrar={() => setSeleccion(null)} />}
-      {creando && <NuevoProducto alCerrar={() => setCreando(false)}
+      {seleccion && <Detalle key={seleccion} id={seleccion} alCambiarPrecio={recargar} alCerrar={() => setSeleccion(null)}
+        alAgregarPresentacion={producto => { setSeleccion(null); setCreando(producto); }} />}
+      {creando && <NuevoProducto producto={creando === true ? null : creando} alCerrar={() => setCreando(false)}
         alGuardar={codigo => { setCreando(false); setQ(codigo); setConsulta({ q: codigo, bajo: false }); }} />}
     </>
   );

@@ -82,3 +82,4 @@ fieldset.sin-borde { border: 0; padding: 0; margin: 0; }
 fieldset.roles { border: 1px solid var(--borde); border-radius: 8px; display: flex; flex-wrap: wrap; gap: 6px 14px; width: 100%; }
 fieldset.roles legend { font-size: 13px; color: var(--suave); }
 dialog.ventana form.fila + form.fila, dialog.ventana .tabla + form.fila { margin-top: 10px; }
+.fila .espacio { flex: 1; margin: 0; }

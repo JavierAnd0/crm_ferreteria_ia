@@ -989,7 +989,7 @@ Aplicación de una sola página en React (`frontend/src/App.jsx`) con enrutador 
 | Facturas (`ventas`, `factura/{id}`) | `VENTA_EMITIR`, `REPORTE_CONSULTAR` | Vendedor, Gerencia | Lista por fechas, factura para imprimir y anulación con motivo. |
 | Comprar (`comprar`) | `COMPRA_REGISTRAR` | Compras | Proveedor, factura del proveedor, líneas por código con costo y lote. |
 | Compras registradas (`compras`) | `COMPRA_REGISTRAR`, `COSTO_VER` | Compras, Gerencia | Ingresos por fechas; detalle en ventana y anulación con motivo (`COMPRA_ANULAR`). |
-| Productos y existencias (`productos`) | todos | Todos; edición Inventario | Búsqueda; al tocar un producto, ventana emergente con existencias, unidades (y alta de unidades), lotes, historial de precios, cambio de porcentaje y precio manual; botón «Nuevo producto» que abre el alta en otra ventana, con creación rápida de categoría y marca. |
+| Productos y existencias (`productos`) | todos | Todos; edición Inventario | Búsqueda; al tocar un producto, ventana emergente con existencias, otra presentación del mismo producto, unidades (y alta de unidades), lotes, historial de precios, cambio de porcentaje y precio manual; botón «Nuevo producto» que abre el alta en otra ventana, con creación rápida de categoría y marca. |
 | Clientes y proveedores (`terceros`) | todos | Vendedor, Compras | Búsqueda; alta y edición de terceros en ventana emergente. |
 | Reservas y dañados (`reservas`) | `RESERVA_GESTIONAR`, `ESTADO_DANADO` | Vendedor, Inventario | Reservas activas, nueva reserva, liberación y paso a dañado o recuperado. |
 | Kárdex (`kardex`) | `PRODUCTO_EDITAR`, `REPORTE_CONSULTAR` | Inventario, Gerencia | Movimientos por código y fechas con saldo y costo después de cada uno. |

@@ -48,6 +48,17 @@ await p.click('#nuevo [aria-label="Nueva categoría"]'); await p.waitForTimeout(
 if (await p.locator('#nuevo [name=categoriaId] option').count() !== antes + 1) throw new Error('No se creó la categoría');
 await cerrar();
 
+// producto → otra presentación del mismo producto
+await p.click('[data-a=ver] >> nth=0'); await p.waitForSelector(`${ventana} [data-a=presentacion]`);
+const nombre = (await p.locator(`${ventana} header`).innerText()).split(' ')[0];
+await p.click('[data-a=presentacion]'); await p.waitForSelector(`${ventana} #nuevo`);
+const otro = '78' + String(Date.now()).slice(-11);
+await p.fill('#nuevo [name=presentacion]', 'Empaque e2e ' + otro.slice(-5)); await p.fill('#nuevo [name=codigoBarras]', otro);
+await p.click('#nuevo button:not([type=button])'); await p.waitForTimeout(1200);
+const fila = await p.locator('tbody').innerText();
+if (!fila.includes(otro) || !fila.includes(nombre)) throw new Error('No se agregó la presentación');
+console.log('PRESENTACION', fila.split('\n')[0].replace(/\t/g, ' '));
+
 // integraciones
 await p.goto(BASE + '/#/integraciones'); await p.waitForTimeout(800);
 console.log('INTEGRACIONES', (await p.locator('#vista').innerText()).slice(0, 120).replace(/\n/g, ' | '));
