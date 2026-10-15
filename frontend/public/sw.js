@@ -1,7 +1,7 @@
 // Service worker: guarda la interfaz para abrirla sin internet. La API nunca se guarda en caché.
-const CACHE = 'ferreteria-v2';
-const ARCHIVOS = ['/', '/index.html', '/css/app.css', '/js/app.js', '/js/api.js', '/js/offline.js', '/js/vistas.js',
-  '/manifest.webmanifest', '/icono.svg'];
+// Los archivos de React llevan un hash en el nombre, así que se guardan a medida que se piden.
+const CACHE = 'ferreteria-v3';
+const ARCHIVOS = ['/', '/index.html', '/manifest.webmanifest', '/icono.svg'];
 
 self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(ARCHIVOS)).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(

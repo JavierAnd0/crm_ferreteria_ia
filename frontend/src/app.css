@@ -12,7 +12,7 @@ body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, 
 .barra .espacio { flex: 1; }
 .cuerpo { display: flex; min-height: calc(100vh - 52px); }
 nav { width: 220px; background: var(--panel); border-right: 1px solid var(--borde); padding: 8px; }
-nav a { display: block; padding: 9px 12px; border-radius: 6px; color: var(--texto); text-decoration: none; }
+nav a { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 6px; color: var(--texto); text-decoration: none; }
 nav a.activo, nav a:hover { background: var(--fondo); color: var(--primario); font-weight: 600; }
 main { flex: 1; padding: 20px; max-width: 1200px; min-width: 0; }
 h1 { font-size: 22px; margin: 0 0 16px; } h2 { font-size: 17px; margin: 22px 0 10px; }
@@ -21,7 +21,7 @@ h1 { font-size: 22px; margin: 0 0 16px; } h2 { font-size: 17px; margin: 22px 0 1
 .fila > label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--suave); }
 input, select, textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--borde); border-radius: 6px; background: var(--panel); color: var(--texto); min-width: 0; }
 input:focus, select:focus, button:focus-visible { outline: 2px solid var(--primario); outline-offset: 1px; }
-button { font: inherit; padding: 8px 14px; border: 0; border-radius: 6px; background: var(--primario); color: var(--primario-texto); cursor: pointer; }
+button { display: inline-flex; align-items: center; gap: 6px; font: inherit; padding: 8px 14px; border: 0; border-radius: 6px; background: var(--primario); color: var(--primario-texto); cursor: pointer; }
 button.secundario { background: transparent; color: inherit; border: 1px solid currentColor; }
 button.peligro { background: var(--error); color: #fff; }
 button.icono { background: transparent; color: inherit; font-size: 20px; padding: 2px 8px; }
@@ -31,7 +31,7 @@ table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--borde); vertical-align: top; }
 th { color: var(--suave); font-weight: 600; font-size: 13px; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-.pastilla { font-size: 12px; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.18); }
+.pastilla { white-space: nowrap; font-size: 12px; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.18); }
 .pastilla.aviso { background: var(--aviso); color: #fff; }
 .ok { color: var(--ok); } .error { color: var(--error); } .suave { color: var(--suave); }
 .tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
@@ -45,9 +45,16 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .login input { width: 100%; }
 pre { white-space: pre-wrap; word-break: break-word; font-size: 12px; margin: 0; }
 @media (max-width: 760px) {
-  nav { position: fixed; top: 52px; bottom: 0; left: 0; z-index: 3; box-shadow: 0 4px 20px rgba(0,0,0,.2); }
+  nav { display: none; position: fixed; top: 52px; bottom: 0; left: 0; z-index: 3; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,.2); }
+  nav.abierto { display: block; }
   main { padding: 16px; }
+  .barra { gap: 8px; padding: 10px 12px; }
+  .barra strong, .pastilla { white-space: nowrap; }
+  #usuario, #btn-salir span { display: none; }
 }
-@media (min-width: 761px) { #btn-menu { display: none; } nav[hidden] { display: block; } }
+@media (min-width: 761px) { #btn-menu { display: none; } }
 @media print { .barra, nav, button { display: none !important; } main { padding: 0; } }
-body.sin-sesion nav, body.sin-sesion #btn-menu { display: none !important; }
+td.acciones { white-space: nowrap; text-align: right; }
+td.acciones button + button { margin-left: 6px; }
+details > summary { cursor: pointer; }
+.tarjeta svg { color: var(--primario); }

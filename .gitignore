@@ -7,3 +7,4 @@ target/
 .neon
 node_modules/
 .env.local
+frontend/node/

@@ -3,3 +3,5 @@ target/
 .idea/
 *.iml
 docs/
+frontend/node_modules/
+frontend/node/
