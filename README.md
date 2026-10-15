@@ -43,7 +43,7 @@ src/main/java/co/ferreteria/inventario/
   migracion/ integracion/ sincronizacion/ reportes/ auditoria/ seguridad/ comun/
 src/main/resources/db/migration/   esquema y datos base (Flyway)
 src/main/resources/db/demo/        datos de demostración (perfil demo)
-src/main/resources/static/         interfaz web instalable con modo sin internet
+frontend/                          interfaz web instalable en React con modo sin internet
 src/test/                          pruebas unitarias, de integración y de humo
 .claude/                           agentes de IA, comandos y reglas del proyecto
 .github/workflows/                 CI/CD y agentes en GitHub

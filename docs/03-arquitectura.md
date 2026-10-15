@@ -25,7 +25,7 @@ indican las tácticas usadas y dónde viven.
 | Auditoría | RNF-SEG-002 | 100 % de movimientos auditados; auditoría no modificable; 5 años | Disparador genérico `fn_auditar` sobre 21 tablas de negocio; contexto de usuario, equipo y origen por transacción (`set_config`); tablas de solo inserción (`fn_inmutable`); particiones mensuales | `V1__esquema_inventario.sql` §11–12, `comun/ContextoAuditoria` |
 | Rendimiento con volumen alto | RNF-REN-001 | Código de barras < 300 ms p95; venta de 20 líneas < 2 s p95; 20.000 movimientos/día | SQL directo con `JdbcClient` en la ruta caliente; saldos materializados en `existencia` (no se suma el kárdex para consultar); índices por FK y fecha; particionado mensual de `movimiento` y `auditoria`; pool Hikari de 20 conexiones; bloqueo por referencia (`FOR UPDATE`) en lugar de bloqueo de tabla | `inventario/Kardex`, `V1` §8 y §12.3, `application.yml` |
 | Fiabilidad | RNF-FIA-001, RNF-REC-001 | Ningún documento sin movimientos ni movimientos sin documento; RPO ≤ 15 min, RTO ≤ 4 h | Una transacción por operación de negocio (`@Transactional` en servicios); reglas críticas en disparadores (última defensa); idempotencia por `uuid`; outbox transaccional; contenedores con `healthcheck` y `restart: unless-stopped`; respaldos **[RECOMENDACIÓN]** (sección 5) | Servicios, `V1` §12, `integracion/`, `docker-compose.yml` |
-| Operación sin internet | RNF-COM-001, RF-OFF-001 | 8 h sin conexión, sin duplicados al sincronizar | PWA con *service worker* (interfaz en caché); copia local del catálogo y cola de ventas en `localStorage`; bloques de numeración por equipo; UUID generado en el equipo; revalidación en el servidor y estado `CONFLICTO` | `static/sw.js`, `static/js/offline.js`, `sincronizacion/`, `inventario/Consecutivos` |
+| Operación sin internet | RNF-COM-001, RF-OFF-001 | 8 h sin conexión, sin duplicados al sincronizar | PWA con *service worker* (interfaz en caché); copia local del catálogo y cola de ventas en `localStorage`; bloques de numeración por equipo; UUID generado en el equipo; revalidación en el servidor y estado `CONFLICTO` | `frontend/public/sw.js`, `frontend/src/offline.js`, `sincronizacion/`, `inventario/Consecutivos` |
 | Mantenibilidad | RNF-MAN-001 | ≥ 3 particiones futuras siempre | Monolito modular por paquete de negocio; migraciones Flyway inmutables (protegidas por *hook*); `fn_crear_particiones` al arrancar y cada mes (7 meses adelante); CI con pruebas sobre PostgreSQL real y cobertura mínima de 65 %; reglas de trabajo en `CLAUDE.md` y agentes especializados | `cierres/TareasCierre`, `pom.xml` (JaCoCo), `.claude/`, `.github/workflows/` |
 
 Atributos secundarios: **capacidad de interacción** (RNF-INT-001: lector de código tipo teclado, sin controladores) y
@@ -87,7 +87,7 @@ flowchart LR
     U["Usuario en el navegador<br/>(computador de caja, tableta, celular)"]
 
     subgraph Navegador["Navegador del equipo"]
-        PWA["Interfaz PWA<br/>HTML + JavaScript de módulos sin framework<br/>api.js, vistas.js, app.js"]
+        PWA["Interfaz PWA<br/>React 19 + Font Awesome (Vite)<br/>App.jsx, paginas/, api.js, offline.js"]
         SW["Service worker sw.js<br/>caché de la interfaz (red primero)"]
         LS[("localStorage<br/>sesión JWT, equipo, catálogo local,<br/>bloque de facturas, cola de ventas")]
     end
@@ -118,9 +118,9 @@ flowchart LR
 
 | Contenedor | Tecnología | Responsabilidad | Archivo |
 |---|---|---|---|
-| Interfaz PWA | JavaScript ES modules, sin framework ni compilación | Pantallas por permiso; venta con lector; trabajo sin internet | `src/main/resources/static/` |
-| Service worker | Cache API, estrategia *red primero* | Abrir la interfaz sin conexión; **nunca** guarda respuestas de `/api/` | `static/sw.js` |
-| Almacenamiento local | `localStorage` | Sesión, equipo elegido, copia del catálogo (hasta 500 referencias), bloque de facturas y cola de ventas | `static/js/api.js`, `static/js/offline.js` |
+| Interfaz PWA | React 19, Vite, Font Awesome; compilada por Maven a `static/` | Pantallas por permiso; venta con lector; trabajo sin internet | `frontend/` |
+| Service worker | Cache API, estrategia *red primero* | Abrir la interfaz sin conexión; **nunca** guarda respuestas de `/api/` | `frontend/public/sw.js` |
+| Almacenamiento local | `localStorage` | Sesión, equipo elegido, copia del catálogo (hasta 500 referencias), bloque de facturas y cola de ventas | `frontend/src/api.js`, `frontend/src/offline.js` |
 | Aplicación | Spring Boot 3.5.16, Spring MVC, Security, Data JPA, JdbcClient, Actuator, springdoc | API REST, reglas de aplicación, tareas programadas, despacho de eventos | `src/main/java/...` |
 | Base de datos | PostgreSQL 16 (imagen `postgres:16-alpine`) | Datos, reglas críticas, auditoría, particiones | `db/migration/V1`, `V2` |
 | Registro de imágenes | GHCR | Imagen versionada por SHA corto y `latest` | `.github/workflows/ci.yml` |
@@ -413,7 +413,7 @@ ADR nuevo que reemplaza al anterior; no se edita el histórico.
   la copia local trae como máximo 500 referencias; el UUID es v4 (`crypto.randomUUID`), no v7 como dice RF-OFF-001;
   los conflictos solo se pueden rechazar, no reaplicar; cada equipo y su rango se crean hoy por SQL.
 
-### ADR-009 — PWA en JavaScript sin framework, servida por Spring Boot
+### ADR-009 — PWA en JavaScript sin framework, servida por Spring Boot (reemplazada por ADR-015)
 
 - **Contexto:** interfaz de mostrador sencilla, mantenida por un equipo pequeño y por agentes de IA; debe abrirse sin
   internet y funcionar en celular.
@@ -490,6 +490,20 @@ ADR nuevo que reemplaza al anterior; no se edita el histórico.
   (sin plan gratis permanente); el servidor por SSH de ADR-011, que sigue siendo la ruta de producción.
 - **Consecuencias:** (+) cero costo y cero código nuevo; cada fusión a `main` despliega. (−) la instancia se duerme y
   tarda unos 3 minutos en despertar; sin respaldos ni capacidad para operación real.
+
+### ADR-015 — Interfaz en React con íconos Font Awesome, compilada por Maven
+
+- **Contexto:** la interfaz de ADR-009 armaba HTML con cadenas y `esc()`; crecer en pantallas y mantenerla con agentes
+  de IA se volvía frágil. Se pidió React y los íconos de Font Awesome.
+- **Decisión:** React 19 con Vite en `frontend/`; una pantalla por componente en `frontend/src/paginas/`, piezas
+  compartidas en `componentes.jsx` y los mismos `api.js` y `offline.js`. Íconos de `@fortawesome/free-solid-svg-icons`
+  empaquetados (sin CDN, para que abran sin internet). `frontend-maven-plugin` instala Node, corre `npm ci` y
+  `vite build` hacia `target/classes/static`, así el JAR y la imagen siguen siendo un solo artefacto y un solo origen.
+  El *service worker* guarda en caché lo que va pidiendo, porque los nombres de los archivos cambian en cada compilación.
+- **Alternativas consideradas:** seguir sin framework; Next.js (exige servidor Node aparte); íconos por CDN.
+- **Consecuencias:** (+) React escapa los datos por defecto; componentes reutilizables; recarga en vivo con
+  `npm run dev`. (−) dependencias de npm y unos 115 KB comprimidos de JavaScript; la primera compilación descarga
+  Node; `-Dfrontend.omitir=true` permite compilar solo el backend.
 
 ## 8. Seguridad
 

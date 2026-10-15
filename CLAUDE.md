@@ -11,7 +11,7 @@ Requisitos en `docs/01-requisitos.md`; diseño en `docs/02-analisis-diseno.md`; 
 
 ## Pila
 Java 21, Spring Boot 3.5, Maven, PostgreSQL 16, Flyway, Spring Security (JWT HS256), JPA para maestros y
-JdbcClient para documentos y kárdex, interfaz web (PWA) en JavaScript sin framework en `src/main/resources/static`.
+JdbcClient para documentos y kárdex, interfaz web (PWA) en React 19 + Vite con íconos Font Awesome en `frontend/` (Maven la compila a `static`).
 
 ## Comandos
 | Para | Comando |
@@ -20,6 +20,8 @@ JdbcClient para documentos y kárdex, interfaz web (PWA) en JavaScript sin frame
 | Una clase de prueba | `mvn test -Dtest=CompraVentaTest` |
 | Levantar todo con datos demo | `cp .env.ejemplo .env` (perfil demo) y `docker compose up -d --build` |
 | Correr la app contra un PostgreSQL local | `SPRING_PROFILES_ACTIVE=demo mvn spring-boot:run` |
+| Editar la interfaz con recarga en vivo | `cd frontend && npm install && npm run dev` (abre :5173, API en :8080) |
+| Compilar solo el backend | `mvn verify -Dfrontend.omitir=true` |
 
 Usuarios demo: admin, vendedor1, compras1, inventario1, gerente1; clave `Demo123*`.
 
