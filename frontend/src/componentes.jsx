@@ -1,7 +1,7 @@
 // Piezas compartidas: avisos, tabla genérica, carga de datos, botones con ícono y campos de formulario.
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 // ------------------------------------------------------------------ avisos
 const ContextoAvisos = createContext(() => {});
@@ -82,3 +82,24 @@ export function Tabla({ filas, columnas, acciones }) {
 
 /** Lee los campos de un formulario como objeto { nombre: valor recortado }. */
 export const valores = form => Object.fromEntries([...new FormData(form)].map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]));
+
+/**
+ * Ventana emergente sobre la página (dialog nativo): se cierra con Esc, con la X o tocando fuera.
+ * Se muestra al montarla; el padre la quita llamando alCerrar.
+ */
+export function Ventana({ titulo, alCerrar, children, ancha }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const d = ref.current;
+    if (!d.open) d.showModal();
+    return () => d.open && d.close();
+  }, []);
+  return (
+    <dialog ref={ref} className={'ventana' + (ancha ? ' ancha' : '')} onClose={alCerrar}
+      onClick={e => e.target === ref.current && alCerrar()}>
+      <header><h2>{titulo}</h2>
+        <button className="icono" data-a="cerrar" aria-label="Cerrar" onClick={alCerrar}><Icono i={faXmark} /></button></header>
+      <div className="contenido">{children}</div>
+    </dialog>
+  );
+}
