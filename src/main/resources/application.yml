@@ -7,8 +7,9 @@ spring:
     password: ${DB_PASSWORD:ferreteria}
     hikari:
       maximum-pool-size: ${DB_POOL:20}
-      # Las fechas de los filtros (desde/hasta) se interpretan en hora de Colombia.
-      connection-init-sql: SET TIME ZONE 'America/Bogota'
+      # Las fechas de los filtros (desde/hasta) se interpretan en hora de Colombia. El search_path se fija aquí
+      # porque algunos proxies administrados (Neon) no aplican el currentSchema de la URL.
+      connection-init-sql: SET TIME ZONE 'America/Bogota'; SET search_path TO ferreteria
   flyway:
     schemas: ferreteria
     default-schema: ferreteria
