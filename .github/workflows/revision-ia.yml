@@ -14,11 +14,19 @@ jobs:
   revisar:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    env:
+      # Sin el secreto ANTHROPIC_API_KEY la revisión se omite con un aviso en vez de marcar el PR en rojo.
+      TIENE_CLAVE: ${{ secrets.ANTHROPIC_API_KEY != '' }}
     steps:
+      - name: Avisar que falta la clave
+        if: env.TIENE_CLAVE != 'true'
+        run: echo "::warning::Revisión IA omitida; agregue el secreto ANTHROPIC_API_KEY para activarla (docs/07-uso-de-ia.md)."
       - uses: actions/checkout@v5
+        if: env.TIENE_CLAVE == 'true'
         with:
           fetch-depth: 0
       - uses: anthropics/claude-code-action@v1
+        if: env.TIENE_CLAVE == 'true'
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
