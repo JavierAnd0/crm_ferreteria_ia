@@ -11,11 +11,7 @@ services:
     autoDeploy: true            # cada fusión a main vuelve a desplegar
     healthCheckPath: /actuator/health/readiness
     envVars:
-      - key: DB_URL             # jdbc:postgresql://<host-directo-neon>/neondb?sslmode=require&currentSchema=ferreteria&stringtype=unspecified
-        sync: false
-      - key: DB_USER
-        sync: false
-      - key: DB_PASSWORD
+      - key: DATABASE_URL       # cadena de Neon tal cual: postgresql://usuario:clave@host/neondb?sslmode=require
         sync: false
       - key: JWT_SECRET
         generateValue: true
