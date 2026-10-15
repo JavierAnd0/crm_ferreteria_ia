@@ -481,6 +481,16 @@ ADR nuevo que reemplaza al anterior; no se edita el histórico.
 
 ---
 
+### ADR-014 — Demostración en Render + Neon sin servidor propio
+
+- **Contexto:** el proyecto debe poder mostrarse en internet y no se dispone de un servidor dedicado.
+- **Decisión:** `render.yaml` despliega la misma imagen del `Dockerfile` en Render (plan gratis) contra PostgreSQL 16
+  administrado en Neon, con conexión directa (sin *pooler*), perfil `demo` y opciones de JVM para 512 MB y 0,1 CPU.
+- **Alternativas consideradas:** Vercel (no ejecuta procesos Java persistentes ni ofrece PostgreSQL); Railway y Fly.io
+  (sin plan gratis permanente); el servidor por SSH de ADR-011, que sigue siendo la ruta de producción.
+- **Consecuencias:** (+) cero costo y cero código nuevo; cada fusión a `main` despliega. (−) la instancia se duerme y
+  tarda unos 3 minutos en despertar; sin respaldos ni capacidad para operación real.
+
 ## 8. Seguridad
 
 ### 8.1 Autenticación

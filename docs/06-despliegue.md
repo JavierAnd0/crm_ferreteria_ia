@@ -55,3 +55,29 @@ Las migraciones de Flyway se aplican solas al arrancar la nueva versión. Como n
 | Cierre mensual | Automático el día 1 a las 02:00, hora de Colombia. Revise antes los conflictos de ventas sin internet: el cierre no corre si quedan pendientes del mes. |
 | Monitoreo | `/actuator/health/liveness` y `/readiness` para el orquestador o un monitor externo; registros con `docker compose logs app`. |
 | Equipos sin internet | Por cada caja nueva: registro en `dispositivo` con `permite_fuera_linea` y su rango de factura en `consecutivo`. |
+
+## 6. Demostración en la nube sin servidor propio (Render + Neon)
+
+Para mostrar la aplicación sin tener un servidor, se usa Render para ejecutar la imagen y Neon para PostgreSQL, ambos
+con plan gratis. Vercel no sirve: solo ejecuta funciones serverless cortas, no un proceso Java siempre encendido con
+tareas programadas, y no trae PostgreSQL (ADR-014).
+
+1. **Neon** (neon.tech): cree un proyecto con PostgreSQL 16 en la región `AWS us-east-1`. En «Connect» desactive
+   «Connection pooling» (la aplicación usa `set_config` y `SET TIME ZONE` por sesión, que el *pooler* no conserva) y
+   copie el host, el usuario y la clave.
+2. **Render** (render.com): «New › Blueprint», elija este repositorio y Render leerá `render.yaml`. Le pedirá:
+   - `DB_URL`: `jdbc:postgresql://<host>/neondb?sslmode=require&currentSchema=ferreteria&stringtype=unspecified`
+     (si el texto de Neon trae `channel_binding=require`, no lo copie).
+   - `DB_USER` y `DB_PASSWORD`: los de Neon.
+
+   `JWT_SECRET` lo genera Render; `SPRING_PROFILES_ACTIVE=demo` carga los usuarios de ejemplo (clave `Demo123*`).
+3. Render construye el `Dockerfile`, Flyway crea el esquema en Neon y la aplicación queda en
+   `https://inventario-ferreteria.onrender.com` (o el nombre que Render asigne). Cada fusión a `main` despliega de nuevo.
+
+Límites del plan gratis: la instancia tiene 512 MB y 0,1 CPU y se apaga tras 15 minutos sin visitas; el primer acceso
+después tarda unos 3 minutos en arrancar. Abra la URL unos minutos antes de una presentación. Para uso real de la
+ferretería se necesita un plan pago o el servidor de la sección 4.
+
+Verificado el 15-oct-2026 en un contenedor limitado a 512 MB y 0,1 CPU, con un usuario de PostgreSQL sin privilegios de
+superusuario (como el de Neon): migraciones aplicadas, arranque en 145 s con las opciones de `render.yaml` (315 s sin
+ellas), 290 MB de memoria, `/actuator/health/readiness` en 200 e inicio de sesión de `gerente1` correcto.

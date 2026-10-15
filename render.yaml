@@ -1,0 +1,27 @@
+# Blueprint de Render: despliegue de demostración sin servidor propio (ver docs/06-despliegue.md, sección 6).
+# La base de datos vive en Neon (PostgreSQL 16 administrado); Render solo ejecuta la imagen del Dockerfile.
+services:
+  - type: web
+    name: inventario-ferreteria
+    runtime: docker
+    plan: free
+    region: virginia            # cerca de Neon aws-us-east-1 y de Colombia
+    branch: main
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true            # cada fusión a main vuelve a desplegar
+    healthCheckPath: /actuator/health/readiness
+    envVars:
+      - key: DB_URL             # jdbc:postgresql://<host-directo-neon>/neondb?sslmode=require&currentSchema=ferreteria&stringtype=unspecified
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SPRING_PROFILES_ACTIVE
+        value: demo
+      - key: DB_POOL            # el plan gratis de Neon limita las conexiones
+        value: "5"
+      - key: JAVA_TOOL_OPTIONS  # 512 MB y 0,1 CPU: solo compilador C1 para arrancar en ~2,5 min en vez de ~5
+        value: -XX:MaxRAMPercentage=60 -XX:+UseSerialGC -Xss512k -XX:TieredStopAtLevel=1 -XX:CICompilerCount=1
