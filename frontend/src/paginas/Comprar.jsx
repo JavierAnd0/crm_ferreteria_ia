@@ -31,7 +31,7 @@ export default function Comprar() {
 
   return (
     <>
-      <h1>Comprar</h1>
+      <div className="encabezado"><h1>Comprar</h1><a className="boton secundario" href="#/compras">Ver compras registradas</a></div>
       <Estado datos={proveedores} error={error}>
         <form id="encabezado-compra" className="panel fila" onSubmit={e => e.preventDefault()}>
           <Campo etiqueta="Proveedor"><select name="proveedor">

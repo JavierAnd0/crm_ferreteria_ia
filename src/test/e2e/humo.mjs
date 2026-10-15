@@ -1,4 +1,4 @@
-// Prueba de humo de la interfaz: entra como admin, abre las 14 pantallas, vende un producto por código de
+// Prueba de humo de la interfaz: entra como admin, abre las 16 pantallas, vende un producto por código de
 // barras y abre la factura. Falla si hay errores de JavaScript o respuestas 4xx/5xx de la API.
 // Uso: npm i playwright && BASE=http://localhost:8080 node src/test/e2e/humo.mjs  (app con perfil demo)
 import { chromium } from 'playwright';
@@ -12,7 +12,7 @@ p.on('response', r => r.url().includes('/api/') && r.status() >= 400 && errores.
 await p.goto(BASE + '/');
 await p.fill('[name=login]', 'admin'); await p.fill('[name=contrasena]', 'Demo123*');
 await p.click('form button'); await p.waitForTimeout(1500);
-for (const r of ['inicio','vender','ventas','comprar','productos','terceros','reservas','kardex','cierres','reportes','migracion','auditoria','usuarios','offline']) {
+for (const r of ['inicio','vender','ventas','comprar','compras','productos','terceros','reservas','kardex','cierres','reportes','migracion','auditoria','usuarios','integraciones','offline']) {
   await p.goto(BASE + '/#/' + r); await p.waitForTimeout(800);
   const t = await p.locator('#vista').innerText();
   console.log(r.padEnd(10), t.slice(0, 90).replace(/\n/g, ' | '));

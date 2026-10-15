@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { faBan, faMagnifyingGlass, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faBan, faMagnifyingGlass, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { api, sesion } from '../api.js';
 import { dinero, fecha, hoy, num } from '../formato.js';
 import { Boton, Campo, Estado, Tabla, useAccion, useAvisar, useCarga } from '../componentes.jsx';
@@ -49,6 +49,7 @@ export function Factura({ parametro: id }) {
             ['codigo_lote', 'Lote'], ['fecha_fin_garantia', 'Garantía hasta', fecha]]} />
           <p className="total">Subtotal {dinero(f.subtotal)} · Descuento {dinero(f.valor_descuento)} · IVA {dinero(f.valor_impuestos)} · Total {dinero(f.total)}</p>
           <div className="fila">
+            <Boton clase="secundario" icono={faArrowLeft} onClick={() => { location.hash = '#/ventas'; }}>Volver a facturas</Boton>
             <Boton icono={faPrint} onClick={() => print()}>Imprimir</Boton>
             {sesion.puede('VENTA_ANULAR') && f.estado === 'EMITIDA' && <Boton clase="peligro" data-a="anular" icono={faBan} onClick={anular}>Anular</Boton>}
           </div>
