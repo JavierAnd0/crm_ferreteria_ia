@@ -26,7 +26,7 @@ function FormularioTercero({ t, alGuardar, alCerrar }) {
           <Campo etiqueta="Tipo de persona"><select name="tipoPersona" defaultValue={t.tipoPersona}><option>NATURAL</option><option>JURIDICA</option></select></Campo>
           <Campo etiqueta="Identificación"><select name="tipoIdentificacion" defaultValue={t.tipoIdentificacion}>
             <option>CC</option><option>NIT</option><option>CE</option><option>PAS</option></select></Campo>
-          <Campo etiqueta="Número (cédula o NIT)"><input name="numeroIdentificacion" defaultValue={t.numeroIdentificacion} required /></Campo>
+          <Campo etiqueta="Número (cédula o NIT)"><input name="numeroIdentificacion" defaultValue={t.numeroIdentificacion} readOnly={!!t.id} required /></Campo>
           <Campo etiqueta="DV"><input name="digitoVerificacion" size={2} defaultValue={t.digitoVerificacion ?? ''} /></Campo>
           <Campo etiqueta="Nombre"><input name="nombres" defaultValue={t.nombres} /></Campo>
           <Campo etiqueta="Apellido"><input name="apellidos" defaultValue={t.apellidos} /></Campo>
