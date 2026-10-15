@@ -9,6 +9,7 @@
 | `src/main/resources/db/migration/V1__esquema_inventario.sql` | Tipos, 36 tablas, restricciones, índices, disparadores, funciones, vistas y particiones mensuales iniciales. | Siempre |
 | `src/main/resources/db/migration/V2__datos_base.sql` | Unidades de medida, tarifas de IVA, 5 roles, 16 permisos y su matriz, consecutivos ING y FE, tercero «Consumidor final». | Siempre |
 | `src/main/resources/db/demo/V100__datos_demo.sql` | Usuarios de prueba, 2 equipos (CAJA-01 con rango FC1 1–5.000), catálogo de 11 referencias, saldo inicial, cierre de septiembre y la compra ING-1. | Solo con el perfil `demo` |
+| `src/main/resources/db/demo/V101__mas_datos_demo.sql` | 20 referencias más (plomería, herramienta manual, cerrajería, seguridad, eléctricos), 9 terceros, 5 compras y unas 60 facturas del 1 al 14 de octubre generadas en orden cronológico, más 2 existencias dañadas. Deja un remanente por referencia para que los reportes y las pruebas tengan saldo. | Solo con el perfil `demo` |
 
 Reglas de mantenimiento: una migración aplicada nunca se edita (Flyway valida su checksum; un hook de los agentes de IA lo impide); todo cambio es un `V{n+1}__descripcion.sql`; `spring.jpa.hibernate.ddl-auto=validate` comprueba al arrancar que las entidades coinciden con el esquema.
 
