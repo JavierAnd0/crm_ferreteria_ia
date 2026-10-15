@@ -12,7 +12,7 @@ la IA, cómo se verificó lo generado y cómo queda automatizado el proceso para
 | Arquitectura | — | Vistas C4, despliegue, flujo de entrega y 13 ADR. | Contraste con archivos reales (pom, compose, workflows). |
 | Base de datos | Aprobó el modelo v1. | Modelo entidad-relación, 36 tablas, disparadores y funciones; luego migraciones Flyway. | Ejecución real en PostgreSQL 16 y 9 pruebas de reglas automáticas. |
 | Backend | Pidió Java con Spring Boot. | 59 clases Java (unas 3.700 líneas) en 13 módulos de negocio. | Compilación, 47 pruebas automáticas, pruebas manuales por HTTP. |
-| Frontend | — | Web instalable sin framework, 14 pantallas, cola sin internet (unas 800 líneas). | Prueba de humo en Chromium a 1280 y 390 px. |
+| Frontend | — | Web instalable, 14 pantallas, cola sin internet; primero en JavaScript sin framework y luego migrada a React con íconos Font Awesome (ADR-015). | Prueba de humo en Chromium a 1280 y 390 px. |
 | Pruebas | — | 47 pruebas (unitarias, reglas de base de datos e integración) y dos pruebas de interfaz en navegador. | `mvn verify` en verde, cobertura 71 %. |
 | Despliegue | — | Dockerfile, docker-compose, CI/CD con GitHub Actions. | Imagen construida y pila levantada `healthy` con login real. |
 | Automatización | Pidió «un agente que realice todo el proceso hasta llegar al despliegue». | `CLAUDE.md`, 8 agentes por rol, 3 comandos, un hook de protección y 2 flujos de GitHub con agentes. | El hook se probó (bloquea editar V1 y permite crear V3). Los flujos de GitHub se activan cuando el código esté en un repositorio. |

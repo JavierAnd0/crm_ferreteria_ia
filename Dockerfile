@@ -1,10 +1,11 @@
 # syntax=docker/dockerfile:1
-# Etapa 1: compila y empaqueta (las pruebas corren en CI, no aquí).
+# Etapa 1: compila la interfaz React (Node lo instala Maven) y empaqueta (las pruebas corren en CI, no aquí).
 FROM maven:3.9.11-eclipse-temurin-21 AS build
 WORKDIR /src
 COPY pom.xml .
 RUN mvn -B -q dependency:go-offline
 COPY src ./src
+COPY frontend ./frontend
 RUN mvn -B -q package -DskipTests \
  && java -Djarmode=tools -jar target/inventario-ferreteria.jar extract --layers --launcher --destination /capas
 

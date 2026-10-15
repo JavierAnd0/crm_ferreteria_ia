@@ -1,7 +1,7 @@
 # Análisis y diseño: inventario de ferretería
 
 **Estado:** versión 1.0 (13-oct-2026), alineada con los requisitos finales y con el código de `inventario-ferreteria`.
-**Entradas:** [01-requisitos.md](01-requisitos.md) (requisitos RF/RNF, matriz de permisos de la sección 5 y reglas RN-01 a RN-16), el esquema `src/main/resources/db/migration/V1__esquema_inventario.sql`, los datos base `V2__datos_base.sql`, el código Java del paquete `co.ferreteria.inventario` y la interfaz web en `src/main/resources/static`.
+**Entradas:** [01-requisitos.md](01-requisitos.md) (requisitos RF/RNF, matriz de permisos de la sección 5 y reglas RN-01 a RN-16), el esquema `src/main/resources/db/migration/V1__esquema_inventario.sql`, los datos base `V2__datos_base.sql`, el código Java del paquete `co.ferreteria.inventario` y la interfaz web en `frontend/` (React).
 
 ---
 
@@ -11,7 +11,7 @@ Este documento describe **qué hace el sistema y cómo está construido**: casos
 
 El alcance es el de los requisitos finales: una ferretería con **una sola bodega**, cuyas existencias solo cambian por **compras** (documento de ingreso `ING-n`) y **ventas** (factura `FE-n`, o el prefijo del equipo cuando se vende sin internet). Las reservas y los daños son **cambios de estado** dentro de la bodega (disponible, reservada, dañada) que no alteran el total. Quedan fuera los ajustes, el conteo físico, los traslados y las devoluciones (sección 6 de los requisitos).
 
-Arquitectura en una línea: aplicación Spring Boot 3.5 (Java 21) con API REST protegida por JWT, PostgreSQL 16 con las reglas críticas en disparadores, e interfaz web PWA en JavaScript sin framework que puede facturar sin conexión.
+Arquitectura en una línea: aplicación Spring Boot 3.5 (Java 21) con API REST protegida por JWT, PostgreSQL 16 con las reglas críticas en disparadores, e interfaz web PWA en React con íconos Font Awesome que puede facturar sin conexión.
 
 ---
 
@@ -979,7 +979,7 @@ API sin estado bajo `/api`, JSON, autenticación `Authorization: Bearer <JWT>`. 
 
 ## 9. Diseño de la interfaz
 
-Aplicación de una sola página (`index.html`, `js/app.js`) con enrutador por `#/ruta`. El menú (`MENU` en `app.js`) solo muestra las opciones para las que el usuario tiene al menos uno de los permisos indicados; la autorización real la hace la API.
+Aplicación de una sola página en React (`frontend/src/App.jsx`) con enrutador por `#/ruta`; cada pantalla es un componente de `frontend/src/paginas/`. El menú (`MENU` en `App.jsx`) solo muestra las opciones para las que el usuario tiene al menos uno de los permisos indicados; la autorización real la hace la API.
 
 | Pantalla (ruta) | Permisos que la muestran | Rol típico | Propósito |
 |---|---|---|---|

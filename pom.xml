@@ -22,6 +22,7 @@
     <springdoc.version>2.9.1</springdoc.version>
     <poi.version>5.5.1</poi.version>
     <jacoco.version>0.8.15</jacoco.version>
+    <frontend.omitir>false</frontend.omitir>
   </properties>
 
   <dependencies>
@@ -51,6 +52,24 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+      <!-- Interfaz React (frontend/): instala Node en frontend/node, ejecuta npm ci y vite build hacia target/classes/static.
+           Para compilar solo el backend: -Dfrontend.omitir=true -->
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+        <version>1.15.1</version>
+        <configuration>
+          <workingDirectory>frontend</workingDirectory>
+          <nodeVersion>v22.22.0</nodeVersion>
+          <skip>${frontend.omitir}</skip>
+        </configuration>
+        <executions>
+          <execution><id>instalar-node</id><goals><goal>install-node-and-npm</goal></goals></execution>
+          <execution><id>npm-ci</id><goals><goal>npm</goal></goals><configuration><arguments>ci --no-audit --no-fund</arguments></configuration></execution>
+          <execution><id>vite-build</id><goals><goal>npm</goal></goals><phase>process-resources</phase>
+            <configuration><arguments>run build</arguments></configuration></execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.jacoco</groupId>
