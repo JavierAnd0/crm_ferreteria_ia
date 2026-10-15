@@ -20,6 +20,7 @@
 | `SPRING_PROFILES_ACTIVE` | No | `default` (base vacía para producción) o `demo` (datos y usuarios de ejemplo). |
 | `PUERTO` | No | Puerto publicado en el servidor (8080 por defecto). |
 | `DB_URL`, `DB_USER`, `DB_POOL` | No | Solo si la base está fuera de compose. |
+| `DATABASE_URL` | No | Alternativa a `DB_URL`/`DB_USER`/`DB_PASSWORD`: la cadena `postgresql://usuario:clave@host/base?sslmode=require` que entregan Neon o Render. Si también existe `DB_URL`, gana `DB_URL`. |
 | `IMAGEN` | No | Imagen a ejecutar; el despliegue automático la fija al SHA publicado. |
 
 ## 3. Ambiente local o de demostración
@@ -64,11 +65,12 @@ tareas programadas, y no trae PostgreSQL (ADR-014).
 
 1. **Neon** (neon.tech): cree un proyecto con PostgreSQL 16 en la región `AWS us-east-1`. En «Connect» desactive
    «Connection pooling» (la aplicación usa `set_config` y `SET TIME ZONE` por sesión, que el *pooler* no conserva) y
-   copie el host, el usuario y la clave.
-2. **Render** (render.com): «New › Blueprint», elija este repositorio y Render leerá `render.yaml`. Le pedirá:
-   - `DB_URL`: `jdbc:postgresql://<host>/neondb?sslmode=require&currentSchema=ferreteria&stringtype=unspecified`
-     (si el texto de Neon trae `channel_binding=require`, no lo copie).
-   - `DB_USER` y `DB_PASSWORD`: los de Neon.
+   copie la cadena de conexión `postgresql://…`. También sirve la CLI de Neon (el repositorio trae `neon.ts`):
+   `npm i -g neon`, el `neon init` que muestra la consola, `neon login` y `neon env pull`, que deja la cadena en
+   `.env.local` como `DATABASE_URL` (ignorado por git).
+2. **Render** (render.com): «New › Blueprint», elija este repositorio y Render leerá `render.yaml`. Solo le pedirá
+   `DATABASE_URL`: pegue la cadena de Neon tal cual. La aplicación la traduce a JDBC (`comun.UrlBaseDatos`), agrega
+   el esquema `ferreteria` y descarta `channel_binding`, que el controlador JDBC no reconoce.
 
    `JWT_SECRET` lo genera Render; `SPRING_PROFILES_ACTIVE=demo` carga los usuarios de ejemplo (clave `Demo123*`).
 3. Render construye el `Dockerfile`, Flyway crea el esquema en Neon y la aplicación queda en
@@ -80,4 +82,5 @@ ferretería se necesita un plan pago o el servidor de la sección 4.
 
 Verificado el 15-oct-2026 en un contenedor limitado a 512 MB y 0,1 CPU, con un usuario de PostgreSQL sin privilegios de
 superusuario (como el de Neon): migraciones aplicadas, arranque en 145 s con las opciones de `render.yaml` (315 s sin
-ellas), 290 MB de memoria, `/actuator/health/readiness` en 200 e inicio de sesión de `gerente1` correcto.
+ellas), 290 MB de memoria, `/actuator/health/readiness` en 200 e inicio de sesión de `gerente1` correcto. La
+conexión solo con `DATABASE_URL` (clave con `/` y `+`, `channel_binding=require`) aplicó las migraciones y dio sesión.
