@@ -4,10 +4,10 @@
 
 | Nivel | Qué verifica | Herramienta | Dónde |
 |---|---|---|---|
-| Unitarias | Lógica pura: conversión de unidades, fracciones, precio sugerido, dígito de verificación del NIT. | JUnit 5, AssertJ | `src/test/java/.../comun`, `.../terceros` |
+| Unitarias | Lógica pura: conversión de unidades, fracciones, precio sugerido, dígito de verificación del NIT, lectura de la cadena `DATABASE_URL` de Neon. | JUnit 5, AssertJ | `src/test/java/.../comun`, `.../terceros` |
 | Reglas de base de datos | Lo que PostgreSQL garantiza aunque alguien escriba sin pasar por la aplicación. | Testcontainers (PostgreSQL 16 real) | `basedatos/ReglasBaseDatosTest` |
-| Integración (API) | Flujos completos por HTTP con JWT real: compra, venta, reservas, daños, permisos, sin internet, migración y cierres. | Spring Boot Test, MockMvc, Testcontainers | `flujos/*Test` |
-| Interfaz de punta a punta | Las 14 pantallas abren sin errores, una venta por código de barras termina en factura, y una venta hecha sin red se sincroniza al volver. | Playwright + Chromium | `src/test/e2e/humo.mjs`, `src/test/e2e/sin-internet.mjs` |
+| Integración (API) | Flujos completos por HTTP con JWT real: compra, venta, reservas, daños, permisos, sin internet, migración y cierres. | Spring Boot Test, MockMvc, Testcontainers | `flujos/*Test`, `catalogo/CatalogoTest` |
+| Interfaz de punta a punta | Las 16 pantallas abren sin errores; una venta por código de barras termina en factura; una venta hecha sin red se sincroniza al volver; los detalles y formularios (producto, presentación, unidad, precio manual, compra, tercero, usuario) abren y guardan en ventana emergente. | Playwright + Chromium | `src/test/e2e/humo.mjs`, `sin-internet.mjs`, `productos.mjs`, `ventanas.mjs` |
 
 Decisiones:
 
@@ -22,25 +22,29 @@ mvn verify                                   # todas, con reporte de cobertura e
 mvn test -Dtest=CompraVentaTest              # una clase
 BASE=http://localhost:8080 node src/test/e2e/humo.mjs          # interfaz, con la app en perfil demo
 BASE=http://localhost:8080 node src/test/e2e/sin-internet.mjs  # venta sin red y sincronización
+BASE=http://localhost:8080 node src/test/e2e/productos.mjs     # detalle y alta de productos en ventana
+BASE=http://localhost:8080 node src/test/e2e/ventanas.mjs      # compras, terceros, usuarios, unidades y precios
 ```
 
 Requisitos: Java 21, Maven y Docker (para Testcontainers).
 
-## 3. Resultado de la última ejecución (13-oct-2026)
+## 3. Resultado de la última ejecución (15-oct-2026)
 
 | Clase | Pruebas | Resultado |
 |---|---|---|
 | `CantidadesTest` | 12 | Superadas |
 | `DigitoVerificacionTest` | 4 | Superadas |
+| `UrlBaseDatosTest` | 4 | Superadas |
 | `ReglasBaseDatosTest` | 9 | Superadas |
 | `CompraVentaTest` | 7 | Superadas |
 | `EstadosYReservasTest` | 4 | Superadas |
 | `SeguridadTest` | 6 | Superadas |
 | `SincronizacionTest` | 3 | Superadas |
 | `MigracionYCierreTest` | 2 | Superadas |
-| **Total** | **47** | **47 superadas, 0 fallidas; cobertura de líneas 71 %** |
+| `CatalogoTest` | 2 | Superadas |
+| **Total** | **53** | **53 superadas, 0 fallidas; cobertura de líneas 73 %** |
 
-Interfaz: 14 pantallas abiertas, venta FE-1 emitida por lector y factura abierta, sin errores de consola ni respuestas de error de la API, revisada a 1280 px y 390 px de ancho. Sin internet: con la red cortada en el navegador se emitió FC1-51 desde el bloque de CAJA-01, quedó en la cola local y al volver la red se sincronizó (cola en 0, venta con origen FUERA_DE_LINEA).
+Interfaz: 16 pantallas abiertas, venta FE-1 emitida por lector y factura abierta, sin errores de consola ni respuestas de error de la API, revisada a 1280 px y 390 px de ancho. Sin internet: con la red cortada en el navegador se emitió FC1-51 desde el bloque de CAJA-01, quedó en la cola local y al volver la red se sincronizó (cola en 0, venta con origen FUERA_DE_LINEA). Ventanas: se creó un producto y otra presentación, se agregaron una unidad y un precio manual, y se abrieron y guardaron la compra, un tercero y un usuario en ventana emergente, sin errores.
 
 ## 4. Matriz de trazabilidad requisito → prueba
 
@@ -49,6 +53,9 @@ Interfaz: 14 pantallas abiertas, venta FE-1 emitida por lector y factura abierta
 | RF-PRO-003 | Conversión a unidad base (bulto, libra) | `CantidadesTest.convierteAUnidadBase`, `CompraVentaTest.ventaConvierteUnidadesUsaLoteFefoYCalculaGarantia` |
 | RF-PRO-003 | Fracción mínima | `CantidadesTest.validaMultiploDeFraccionMinima`, `CompraVentaTest.rechazaFraccionQueNoEsMultiploDeLaMinima` |
 | RF-PRO-001 / RN-01 | Un código de barras único | `ReglasBaseDatosTest.unCodigoDeBarrasPorReferencia` |
+| RF-PRO-001 | Otra presentación para un producto existente; sin permiso responde 403 | `CatalogoTest` (2 pruebas), `src/test/e2e/ventanas.mjs` |
+| RF-PRO-001 / RF-PRO-002 | Crear producto y ver su detalle en ventana emergente | `src/test/e2e/productos.mjs` |
+| RF-TER-001 / RF-SEG-001 | Editar terceros y usuarios desde la interfaz | `src/test/e2e/ventanas.mjs` |
 | RF-TER-001 / RN-14 | Dígito de verificación del NIT | `DigitoVerificacionTest`, fila con error en `MigracionYCierreTest` |
 | RF-COM-001 | Documento de ingreso, entrada al inventario, costo y precio | `CompraVentaTest.compraEntraAlInventarioConDocumentoDeIngresoYRecalculaCostoYPrecio` |
 | RF-VEN-001 / RN-10 / RN-11 | Factura, lote que vence primero, fecha de fin de garantía | `CompraVentaTest.ventaConvierteUnidadesUsaLoteFefoYCalculaGarantia` |
