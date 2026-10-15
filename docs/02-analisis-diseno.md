@@ -988,7 +988,7 @@ Aplicación de una sola página en React (`frontend/src/App.jsx`) con enrutador 
 | Vender (`vender`) | `VENTA_EMITIR` | Vendedor | Punto de venta con lector: cliente, forma de pago, líneas con unidad y cantidad, total con IVA; cae a modo sin internet. |
 | Facturas (`ventas`, `factura/{id}`) | `VENTA_EMITIR`, `REPORTE_CONSULTAR` | Vendedor, Gerencia | Lista por fechas, factura para imprimir y anulación con motivo. |
 | Comprar (`comprar`) | `COMPRA_REGISTRAR` | Compras | Proveedor, factura del proveedor, líneas por código con costo y lote. |
-| Productos y existencias (`productos`) | todos | Todos; edición Inventario | Búsqueda, detalle por unidades y lotes, historial de precios, cambio de porcentaje y alta de productos. |
+| Productos y existencias (`productos`) | todos | Todos; edición Inventario | Búsqueda; al tocar un producto, ventana emergente con existencias, unidades, lotes, historial de precios y cambio de porcentaje; botón «Nuevo producto» que abre el alta en otra ventana. |
 | Clientes y proveedores (`terceros`) | todos | Vendedor, Compras | Búsqueda y registro de terceros. |
 | Reservas y dañados (`reservas`) | `RESERVA_GESTIONAR`, `ESTADO_DANADO` | Vendedor, Inventario | Reservas activas, nueva reserva, liberación y paso a dañado o recuperado. |
 | Kárdex (`kardex`) | `PRODUCTO_EDITAR`, `REPORTE_CONSULTAR` | Inventario, Gerencia | Movimientos por código y fechas con saldo y costo después de cada uno. |
