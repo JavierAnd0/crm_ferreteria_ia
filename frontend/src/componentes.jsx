@@ -1,7 +1,8 @@
 // Piezas compartidas: avisos, tabla genérica, carga de datos, botones con ícono y campos de formulario.
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCircleCheck, faCircleExclamation, faSpinner, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { dibujarCodigo, formatoDe } from './codigos.js';
+import { faCircleCheck, faCircleExclamation, faMagnifyingGlass, faSpinner, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 // ------------------------------------------------------------------ avisos
 const ContextoAvisos = createContext(() => {});
@@ -81,17 +82,30 @@ export function Estado({ error, datos, children }) {
 /** Campo con etiqueta arriba, como en el resto de formularios. */
 export const Campo = ({ etiqueta, children }) => <label>{etiqueta}{children}</label>;
 
+/** Etiqueta de color (badge) al estilo de la plantilla: tipo = ok | error | aviso | info | gris. */
+export const Etiqueta = ({ tipo = '', children }) => <span className={'etiqueta ' + tipo}>{children}</span>;
+
+/** Círculo con iniciales o ícono; color = variable CSS (por defecto el primario). */
+export const Avatar = ({ children, color, cuadrado }) =>
+  <span className={'avatar' + (cuadrado ? ' cuadrado' : '')} style={color ? { '--c': color } : undefined}>{children}</span>;
+
+/** Campo de búsqueda con lupa; Enter dispara alBuscar. */
+export const Buscador = ({ valor, alCambiar, alBuscar, ...p }) => (
+  <span className="buscador"><Icono i={faMagnifyingGlass} />
+    <input type="search" value={valor} onChange={e => alCambiar(e.target.value)} onKeyDown={e => e.key === 'Enter' && alBuscar?.()} {...p} /></span>);
+
 /**
  * Tabla genérica. columnas = [[clave, título, formato?, 'num'?]]; el formato recibe (valor, fila) y puede
- * devolver texto o JSX. acciones(fila, i) agrega una última columna.
+ * devolver texto o JSX. acciones(fila, i) agrega una última columna. alElegir(fila) vuelve clicable la fila entera.
  */
-export function Tabla({ filas, columnas, acciones }) {
-  if (!filas?.length) return <p className="suave">Sin resultados.</p>;
+export function Tabla({ filas, columnas, acciones, alElegir, vacio = 'Sin resultados.' }) {
+  if (!filas?.length) return <p className="suave">{vacio}</p>;
   return (
     <div className="tabla"><table>
       <thead><tr>{columnas.map(([k, t, , c]) => <th key={k + t} className={c}>{t}</th>)}{acciones && <th />}</tr></thead>
       <tbody>{filas.map((f, i) => (
-        <tr key={f.id ?? f.uuid ?? i}>
+        <tr key={f.id ?? f.uuid ?? i} className={alElegir ? 'clicable' : undefined}
+          onClick={alElegir ? e => !e.target.closest('a, button, input, select, label') && alElegir(f) : undefined}>
           {columnas.map(([k, t, fmt, c]) => <td key={k + t} className={c}>{fmt ? fmt(f[k], f) : f[k]}</td>)}
           {acciones && <td className="acciones">{acciones(f, i)}</td>}
         </tr>))}
@@ -121,5 +135,19 @@ export function Ventana({ titulo, alCerrar, children, ancha }) {
         <button className="icono" data-a="cerrar" aria-label="Cerrar" onClick={alCerrar}><Icono i={faXmark} /></button></header>
       <div className="contenido">{children}</div>
     </dialog>
+  );
+}
+
+/** Código de barras dibujado en SVG; si el código no se puede dibujar lo dice en vez de romper la pantalla. */
+export function CodigoBarras({ codigo, alto, ancho, texto, fuente }) {
+  const ref = useRef(null);
+  const [valido, setValido] = useState(true);
+  useEffect(() => { setValido(dibujarCodigo(ref.current, codigo, { alto, ancho, texto, fuente })); }, [codigo, alto, ancho, texto, fuente]);
+  if (!codigo) return null;
+  return (
+    <>
+      <span className="codigo-barras" data-formato={formatoDe(codigo)} hidden={!valido}><svg ref={ref} /></span>
+      {!valido && <span className="suave">Código no válido para imprimir: {codigo}</span>}
+    </>
   );
 }

@@ -505,6 +505,23 @@ ADR nuevo que reemplaza al anterior; no se edita el histórico.
   `npm run dev`. (−) dependencias de npm y unos 115 KB comprimidos de JavaScript; la primera compilación descarga
   Node; `-Dfrontend.omitir=true` permite compilar solo el backend.
 
+### ADR-016 — Estilo de la plantilla Materialize sin su CSS, y códigos de barras con JsBarcode
+
+- **Contexto:** se pidió aplicar la plantilla Materialize (Bootstrap 5 + jQuery, unos 900 KB de `core.css` y decenas
+  de librerías) y poder generar e imprimir códigos de barras.
+- **Decisión:** se toman de la plantilla los colores (primario `#8C57FF`, fondo `#F4F5FA`, texto `#2E263D` con
+  opacidades), las medidas (menú de 16.25rem, barra de 4rem, avatares de 2.5rem, radios de .375 y .625rem) y las formas
+  (ítem activo del menú en degradado, tarjetas con sombra, etiquetas de color, fuente Inter) como variables en
+  `frontend/src/app.css`; no se copia su CSS ni su JavaScript. Inter va empaquetada con `@fontsource/inter`.
+  Los códigos se dibujan en SVG con `jsbarcode` (EAN-13 si el código es válido, Code 128 si no); el backend propone
+  códigos internos `299…` (RF-LEC-002) y la impresión abre una ventana aparte con la hoja de etiquetas.
+- **Alternativas consideradas:** cargar Bootstrap y el CSS de la plantilla (choca con React y pesa más que toda la app);
+  generar los códigos en el servidor como imagen (no funciona sin internet); reservar el código al generarlo (tabla y
+  migración nuevas para un caso que la restricción `UNIQUE` ya resuelve).
+- **Consecuencias:** (+) la PWA sigue ligera y funciona sin internet, incluida la fuente y el dibujo de códigos;
+  modo oscuro con la paleta oscura de la plantilla. (−) Los componentes nuevos de la plantilla hay que traducirlos a
+  CSS propio; unos 60 KB más de JavaScript y fuentes.
+
 ## 8. Seguridad
 
 ### 8.1 Autenticación

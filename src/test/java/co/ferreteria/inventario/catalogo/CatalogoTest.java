@@ -38,4 +38,19 @@ class CatalogoTest extends PruebaIntegracion {
         enviar("vendedor1", "/api/productos/1/referencias", Map.of("marcaId", 1, "presentacion", "x", "codigoBarras", "123456",
                 "unidadBase", "UND")).andExpect(status().isForbidden());
     }
+
+    /** RF-LEC-002: el código propuesto es un EAN-13 interno válido que todavía no usa ninguna referencia. */
+    @Test
+    void proponeUnCodigoInternoLibre() throws Exception {
+        String codigo = leer(consultar("inventario1", "/api/referencias/codigo-barras/nuevo").andExpect(status().isOk()))
+                .get("codigo").asText();
+        assertThat(codigo).startsWith(CodigoBarras.PREFIJO_INTERNO).hasSize(13);
+        assertThat(CodigoBarras.esEan13Valido(codigo)).isTrue();
+        consultar("inventario1", "/api/referencias/codigo/" + codigo).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void sinPermisoNoSeGeneranCodigos() throws Exception {
+        consultar("vendedor1", "/api/referencias/codigo-barras/nuevo").andExpect(status().isForbidden());
+    }
 }
