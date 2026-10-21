@@ -7,7 +7,7 @@
 | Unitarias | Lógica pura: conversión de unidades, fracciones, precio sugerido, dígito de verificación del NIT, lectura de la cadena `DATABASE_URL` de Neon. | JUnit 5, AssertJ | `src/test/java/.../comun`, `.../terceros` |
 | Reglas de base de datos | Lo que PostgreSQL garantiza aunque alguien escriba sin pasar por la aplicación. | Testcontainers (PostgreSQL 16 real) | `basedatos/ReglasBaseDatosTest` |
 | Integración (API) | Flujos completos por HTTP con JWT real: compra, venta, reservas, daños, permisos, sin internet, migración y cierres. | Spring Boot Test, MockMvc, Testcontainers | `flujos/*Test`, `catalogo/CatalogoTest` |
-| Interfaz de punta a punta | Las 16 pantallas abren sin errores; una venta por código de barras termina en factura; una venta hecha sin red se sincroniza al volver; los detalles y formularios (producto, presentación, unidad, precio manual, compra, tercero, usuario) abren y guardan en ventana emergente. | Playwright + Chromium | `src/test/e2e/humo.mjs`, `sin-internet.mjs`, `productos.mjs`, `ventanas.mjs` |
+| Interfaz de punta a punta | Las 16 pantallas abren sin errores; una venta por código de barras termina en factura; una venta hecha sin red se sincroniza al volver; los detalles y formularios (producto, presentación, unidad, precio manual, compra, tercero, usuario) abren y guardan en ventana emergente; cada error (clave errada, sesión vencida, servidor caído o arrancando) se explica en pantalla. | Playwright + Chromium | `src/test/e2e/humo.mjs`, `sin-internet.mjs`, `productos.mjs`, `ventanas.mjs`, `errores.mjs` |
 
 Decisiones:
 
@@ -24,11 +24,12 @@ BASE=http://localhost:8080 node src/test/e2e/humo.mjs          # interfaz, con l
 BASE=http://localhost:8080 node src/test/e2e/sin-internet.mjs  # venta sin red y sincronización
 BASE=http://localhost:8080 node src/test/e2e/productos.mjs     # detalle y alta de productos en ventana
 BASE=http://localhost:8080 node src/test/e2e/ventanas.mjs      # compras, terceros, usuarios, unidades y precios
+BASE=http://localhost:8080 node src/test/e2e/errores.mjs       # mensajes de error en el ingreso y sobre ventanas
 ```
 
 Requisitos: Java 21, Maven y Docker (para Testcontainers).
 
-## 3. Resultado de la última ejecución (15-oct-2026)
+## 3. Resultado de la última ejecución (21-oct-2026)
 
 | Clase | Pruebas | Resultado |
 |---|---|---|
@@ -38,11 +39,11 @@ Requisitos: Java 21, Maven y Docker (para Testcontainers).
 | `ReglasBaseDatosTest` | 9 | Superadas |
 | `CompraVentaTest` | 7 | Superadas |
 | `EstadosYReservasTest` | 4 | Superadas |
-| `SeguridadTest` | 6 | Superadas |
+| `SeguridadTest` | 9 | Superadas |
 | `SincronizacionTest` | 3 | Superadas |
 | `MigracionYCierreTest` | 2 | Superadas |
 | `CatalogoTest` | 2 | Superadas |
-| **Total** | **53** | **53 superadas, 0 fallidas; cobertura de líneas 73 %** |
+| **Total** | **56** | **56 superadas, 0 fallidas; cobertura de líneas 74 %** |
 
 Interfaz: 16 pantallas abiertas, venta FE-1 emitida por lector y factura abierta, sin errores de consola ni respuestas de error de la API, revisada a 1280 px y 390 px de ancho. Sin internet: con la red cortada en el navegador se emitió FC1-51 desde el bloque de CAJA-01, quedó en la cola local y al volver la red se sincronizó (cola en 0, venta con origen FUERA_DE_LINEA). Ventanas: se creó un producto y otra presentación, se agregaron una unidad y un precio manual, y se abrieron y guardaron la compra, un tercero y un usuario en ventana emergente, sin errores.
 
@@ -68,6 +69,7 @@ Interfaz: 16 pantallas abiertas, venta FE-1 emitida por lector y factura abierta
 | RN-10 | Lote obligatorio y lote vencido bloqueado | `ReglasBaseDatosTest.productoConVencimientoExigeLoteYNoSeVendeVencido` |
 | RF-CIE-001 / RN-07 | Mes en curso no se cierra; mes cerrado no admite movimientos; saldos del cierre | `MigracionYCierreTest.elMesEnCursoNoSePuedeCerrarYUnMesCerradoNoAdmiteMovimientos`, `ReglasBaseDatosTest.periodoCerradoNoAdmiteMovimientos` |
 | RF-SEG-001 / RNF-SEG-001 | 401 sin token, credenciales erradas, permisos del rol, 403 por permiso, costos ocultos | `SeguridadTest` (5 pruebas) |
+| RF-SEG-001 | Un token viejo guardado no impide ingresar; todo 401 explica el motivo; la interfaz muestra un mensaje claro para cada error | `SeguridadTest` (3 pruebas), `src/test/e2e/errores.mjs` |
 | RF-SEG-001 / RNF-SEG-002 | Alta de usuario auditada con su autor y sin el hash de la clave | `SeguridadTest.crearUsuarioQuedaAuditadoConQuienLoCreoYSinElHashDeLaClave` |
 | RF-AUD-001 / RNF-SEG-002 | Auditoría con usuario; kárdex y auditoría inmutables | `CompraVentaTest.cadaMovimientoQuedaAuditadoConUsuario`, `ReglasBaseDatosTest.lasModificacionesQuedanAuditadasConElUsuarioDeLaSesion`, `ReglasBaseDatosTest.elKardexYLaAuditoriaSonInmutables` |
 | RF-MIG-001 | Validar sin tocar inventario, cargar válidas, rechazar archivo repetido | `MigracionYCierreTest.migraTercerosProductosYSaldosDesdeLaPlantilla` |

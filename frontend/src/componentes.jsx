@@ -1,7 +1,7 @@
 // Piezas compartidas: avisos, tabla genérica, carga de datos, botones con ícono y campos de formulario.
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSpinner, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faCircleExclamation, faSpinner, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 // ------------------------------------------------------------------ avisos
 const ContextoAvisos = createContext(() => {});
@@ -9,16 +9,32 @@ export const useAvisar = () => useContext(ContextoAvisos);
 
 export function ProveedorAvisos({ children }) {
   const [avisos, setAvisos] = useState([]);
+  const capa = useRef(null);
+  const quitar = useCallback(id => setAvisos(a => a.filter(x => x.id !== id)), []);
+  // Los avisos van en la capa superior del navegador para verse también sobre una ventana emergente abierta.
+  useEffect(() => {
+    const c = capa.current;
+    if (!c?.showPopover) return;
+    if (c.matches(':popover-open')) c.hidePopover();
+    if (avisos.length) c.showPopover();
+  }, [avisos]);
   const avisar = useCallback((mensaje, error = false) => {
     const id = Math.random();
-    setAvisos(a => [...a, { id, mensaje, error }]);
-    setTimeout(() => setAvisos(a => a.filter(x => x.id !== id)), error ? 7000 : 4000);
-  }, []);
+    const texto = String(mensaje || '').trim() || (error ? 'Ocurrió un error inesperado. Intente de nuevo.' : 'Listo');
+    setAvisos(a => [...a.filter(x => x.mensaje !== texto), { id, mensaje: texto, error }]);
+    setTimeout(() => quitar(id), error ? 8000 : 4000);
+  }, [quitar]);
   return (
     <ContextoAvisos.Provider value={avisar}>
       {children}
-      <div id="aviso" role="status" aria-live="polite">
-        {avisos.map(a => <div key={a.id} className={a.error ? 'error' : ''}>{a.mensaje}</div>)}
+      <div id="aviso" ref={capa} popover="manual" aria-live="polite">
+        {avisos.map(a => (
+          <div key={a.id} className={a.error ? 'error' : ''} role={a.error ? 'alert' : 'status'}>
+            <Icono i={a.error ? faCircleExclamation : faCircleCheck} />
+            <span>{a.mensaje}</span>
+            <button type="button" className="cerrar" aria-label="Cerrar aviso" onClick={() => quitar(a.id)}><Icono i={faXmark} /></button>
+          </div>
+        ))}
       </div>
     </ContextoAvisos.Provider>
   );
@@ -44,6 +60,10 @@ export function useCarga(cargar, deps = []) {
 }
 
 // ------------------------------------------------------------------ presentación
+/** Error dentro de la pantalla o del formulario, con el mismo aspecto en todo el sistema. */
+export const MensajeError = ({ children }) =>
+  children ? <p className="mensaje-error" role="alert"><Icono i={faCircleExclamation} /> <span>{children}</span></p> : null;
+
 export const Icono = ({ i, ...p }) => <FontAwesomeIcon icon={i} fixedWidth {...p} />;
 
 export function Boton({ icono, children, clase, ...p }) {
@@ -53,7 +73,7 @@ export function Boton({ icono, children, clase, ...p }) {
 export const Cargando = () => <p className="suave"><Icono i={faSpinner} spin /> Cargando…</p>;
 
 export function Estado({ error, datos, children }) {
-  if (error) return <p className="error">{error.message}</p>;
+  if (error) return <MensajeError>{error.message}</MensajeError>;
   if (datos === undefined) return <Cargando />;
   return children;
 }

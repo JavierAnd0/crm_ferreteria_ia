@@ -13,7 +13,7 @@ la IA, cómo se verificó lo generado y cómo queda automatizado el proceso para
 | Base de datos | Aprobó el modelo v1. | Modelo entidad-relación, 36 tablas, disparadores y funciones; luego migraciones Flyway. | Ejecución real en PostgreSQL 16 y 9 pruebas de reglas automáticas. |
 | Backend | Pidió Java con Spring Boot. | 59 clases Java (unas 3.700 líneas) en 13 módulos de negocio. | Compilación, 47 pruebas automáticas, pruebas manuales por HTTP. |
 | Frontend | Pidió React con íconos Font Awesome, ver el producto en una ventana emergente, crear productos y revisar que no faltara nada más. | Web instalable, 16 pantallas, cola sin internet; primero en JavaScript sin framework y luego migrada a React (ADR-015). Revisó cada endpoint contra la interfaz y agregó lo que faltaba: compras registradas, edición de terceros y usuarios, presentaciones, unidades, precio manual e integraciones. | Cuatro pruebas en Chromium a 1280 y 390 px. |
-| Pruebas | — | 53 pruebas (unitarias, reglas de base de datos e integración) y cuatro pruebas de interfaz en navegador. | `mvn verify` en verde, cobertura 73 %. |
+| Pruebas | — | 56 pruebas (unitarias, reglas de base de datos e integración) y cinco pruebas de interfaz en navegador. | `mvn verify` en verde, cobertura 74 %. |
 | Despliegue | — | Dockerfile, docker-compose, CI/CD con GitHub Actions. | Imagen construida y pila levantada `healthy` con login real. |
 | Automatización | Pidió «un agente que realice todo el proceso hasta llegar al despliegue». | `CLAUDE.md`, 8 agentes por rol, 3 comandos, un hook de protección y 2 flujos de GitHub con agentes. | El hook se probó (bloquea editar V1 y permite crear V3). Los flujos de GitHub se activan cuando el código esté en un repositorio. |
 
@@ -38,6 +38,7 @@ que hace confiable el resultado, y quedó registrado en estos errores reales que
 | Varias pruebas nuevas fallaron en la primera ejecución (5 de 46). | `mvn verify`. | Ajuste de las pruebas (puntos de guardado en transacción, cuerpo válido para probar 403) sin debilitar lo que verifican. |
 | La interfaz no permitía crear productos ni ver el detalle sin bajar la página, y varias funciones de la API no tenían pantalla. | El interesado al usar la demo. | Ventanas emergentes y revisión endpoint por endpoint contra la interfaz. |
 | Agregar una presentación a un producto existente devolvía un id nulo (el guardado en cascada persistía una copia). | Prueba de integración nueva (`CatalogoTest`). | Guardar la referencia directamente. |
+| Un token vencido guardado en el navegador hacía que el servidor rechazara el ingreso con un 401 sin cuerpo, y la interfaz mostraba un aviso rojo vacío. | El interesado no pudo entrar con vendedor1 en la demo. | El ingreso ignora el token anterior, todo 401 trae un mensaje y la interfaz traduce cada error a un texto claro. |
 | El encabezado se desbordaba en celulares. | Prueba de interfaz a 390 px. | Se ocultan el nombre y el texto «Salir» en pantallas angostas. |
 
 La lección práctica: **el código generado por IA se acepta por evidencia (pruebas que corren), no por apariencia.**
@@ -64,7 +65,7 @@ flowchart LR
       R4 --> R5[desarrollador-frontend] --> R6[qa] --> R7[revisor] --> R8[devops]
     end
     R8 --> PR["Pull request"]
-    PR --> CI["CI: mvn verify<br/>53+ pruebas, cobertura ≥ 65 %"]
+    PR --> CI["CI: mvn verify<br/>56+ pruebas, cobertura ≥ 65 %"]
     PR --> RV["Revisión IA en el PR"]
     CI --> H{"Aprobación humana"}
     RV --> H
