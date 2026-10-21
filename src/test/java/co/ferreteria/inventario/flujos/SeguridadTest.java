@@ -27,6 +27,36 @@ class SeguridadTest extends PruebaIntegracion {
     }
 
     @Test
+    void contrasenaErradaExplicaElMotivo() throws Exception {
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(Map.of("login", "admin", "contrasena", "otra-cosa"))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("Usuario o contraseña incorrectos"));
+    }
+
+    @Test
+    void unTokenViejoNoImpideIngresar() throws Exception {
+        // El navegador guarda el token de la sesión anterior; vencido o firmado con otra clave no debe bloquear el ingreso.
+        mvc.perform(post("/api/auth/login").header("Authorization", "Bearer " + TOKEN_INVALIDO)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(Map.of("login", "vendedor1", "contrasena", CLAVE_DEMO))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty());
+    }
+
+    @Test
+    void tokenInvalidoRespondeConMensaje() throws Exception {
+        mvc.perform(get("/api/referencias").header("Authorization", "Bearer " + TOKEN_INVALIDO))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("La sesión terminó o no es válida. Ingrese de nuevo."));
+        mvc.perform(get("/api/referencias"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("La sesión terminó o no es válida. Ingrese de nuevo."));
+    }
+
+    private static final String TOKEN_INVALIDO = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ2ZW5kZWRvcjEifQ.firma-de-otra-clave";
+
+    @Test
     void elTokenTraeLosPermisosDelRol() throws Exception {
         mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(Map.of("login", "vendedor1", "contrasena", CLAVE_DEMO))))

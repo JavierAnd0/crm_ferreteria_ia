@@ -10,6 +10,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.stream.Collectors;
 
@@ -38,6 +39,12 @@ public class ManejadorErrores {
                 .map(f -> f.getField() + ": " + f.getDefaultMessage())
                 .collect(Collectors.joining("; "));
         return problema(HttpStatus.BAD_REQUEST, "Datos inválidos", detalle);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    ProblemDetail estado(ResponseStatusException e) {
+        HttpStatus estado = HttpStatus.valueOf(e.getStatusCode().value());
+        return problema(estado, estado.getReasonPhrase(), e.getReason());
     }
 
     @ExceptionHandler(AccessDeniedException.class)

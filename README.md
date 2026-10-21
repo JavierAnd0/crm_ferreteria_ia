@@ -21,7 +21,7 @@ Abra http://localhost:8080 e ingrese con `vendedor1`, `compras1`, `inventario1`,
 Sin servidor propio se puede publicar gratis en Render + Neon con el `render.yaml` del repositorio; los pasos están
 en [docs/06-despliegue.md](docs/06-despliegue.md#6-demostración-en-la-nube-sin-servidor-propio-render--neon).
 
-Para desarrollar: `mvn verify` (53 pruebas contra PostgreSQL real con Testcontainers; requiere Docker).
+Para desarrollar: `mvn verify` (56 pruebas contra PostgreSQL real con Testcontainers; requiere Docker).
 
 ## Documentación
 
