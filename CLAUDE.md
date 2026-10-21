@@ -11,7 +11,8 @@ Requisitos en `docs/01-requisitos.md`; diseño en `docs/02-analisis-diseno.md`; 
 
 ## Pila
 Java 21, Spring Boot 3.5, Maven, PostgreSQL 16, Flyway, Spring Security (JWT HS256), JPA para maestros y
-JdbcClient para documentos y kárdex, interfaz web (PWA) en React 19 + Vite con íconos Font Awesome en `frontend/` (Maven la compila a `static`).
+JdbcClient para documentos y kárdex, interfaz web (PWA) en React 19 + Vite con íconos Font Awesome y el estilo de la plantilla Materialize (variables en
+`frontend/src/app.css`, ADR-016) en `frontend/` (Maven la compila a `static`). Códigos de barras con `jsbarcode`.
 
 ## Comandos
 | Para | Comando |

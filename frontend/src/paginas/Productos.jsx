@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { faDollarSign, faFloppyDisk, faMagnifyingGlass, faPercent, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faBarcode, faDollarSign, faFloppyDisk, faMagnifyingGlass, faPercent, faPlus, faPrint, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { api, sesion } from '../api.js';
 import { dinero, fecha, num, siNo } from '../formato.js';
-import { Boton, Campo, Estado, Tabla, Ventana, useAccion, useAvisar, useCarga, valores } from '../componentes.jsx';
+import { Boton, Buscador, Campo, CodigoBarras, Estado, Etiqueta, Icono, Tabla, Ventana, useAccion, useAvisar, useCarga, valores } from '../componentes.jsx';
+import VentanaEtiquetas from '../etiquetas.jsx';
 
 const opciones = (lista, k = 'id', t = 'nombre') => lista.map(x => <option key={x[k]} value={x[k]}>{x[t]}</option>);
 
-function Detalle({ id, alCambiarPrecio, alCerrar, alAgregarPresentacion }) {
+function Detalle({ id, alCambiarPrecio, alCerrar, alAgregarPresentacion, alImprimir }) {
   const accion = useAccion();
   const avisar = useAvisar();
   const [d, recargarDetalle, error] = useCarga(async () => {
@@ -36,7 +37,9 @@ function Detalle({ id, alCambiarPrecio, alCerrar, alAgregarPresentacion }) {
   return (
     <Ventana ancha titulo={d ? `${d.referencia.producto} ${d.referencia.marca} ${d.referencia.presentacion}` : 'Producto'} alCerrar={alCerrar}>
       <Estado datos={d} error={error}>{d && <>
-      <div className="fila"><p className="suave espacio">Código {d.referencia.codigoBarras} · interno {d.referencia.codigoInterno} · unidad base {d.referencia.unidadBase}</p>
+      <div className="bloque-codigo"><CodigoBarras codigo={d.referencia.codigoBarras} />
+        <p className="suave espacio">Código interno {d.referencia.codigoInterno} · unidad base {d.referencia.unidadBase}</p>
+        <Boton clase="secundario" data-a="etiquetas" icono={faPrint} onClick={() => alImprimir(d.referencia)}>Imprimir etiquetas</Boton>
         {sesion.puede('PRODUCTO_EDITAR') && <Boton clase="secundario" data-a="presentacion" icono={faPlus}
           onClick={() => alAgregarPresentacion({ id: d.referencia.productoId, nombre: d.referencia.producto })}>Agregar presentación</Boton>}</div>
       <div className="resumen">
@@ -77,6 +80,8 @@ function NuevoProducto({ producto, alGuardar, alCerrar }) {
   const accion = useAccion();
   const avisar = useAvisar();
   const [maestros, recargarMaestros] = useCarga(() => api('/api/catalogo/maestros'));
+  const [codigo, setCodigo] = useState('');
+  const generarCodigo = accion(async () => setCodigo((await api('/api/referencias/codigo-barras/nuevo')).codigo));
   const crearMaestro = (ruta, pregunta) => accion(async () => {
     const nombre = prompt(pregunta)?.trim();
     if (!nombre) return;
@@ -117,7 +122,11 @@ function NuevoProducto({ producto, alGuardar, alCerrar }) {
           <Boton type="button" clase="secundario" icono={faPlus} title="Nueva marca" aria-label="Nueva marca"
             onClick={crearMaestro('/api/marcas', 'Nombre de la nueva marca')} /></span></Campo>
         <Campo etiqueta="Presentación"><input name="presentacion" required /></Campo>
-        <Campo etiqueta="Código de barras"><input name="codigoBarras" required /></Campo>
+        <Campo etiqueta="Código de barras (del empaque o generado)"><span className="con-boton">
+          <input name="codigoBarras" required maxLength={14} value={codigo} onChange={e => setCodigo(e.target.value.trim())} />
+          <Boton type="button" clase="secundario" data-a="generar-codigo" icono={faWandMagicSparkles} title="Generar un código EAN-13 interno"
+            onClick={generarCodigo}>Generar</Boton></span></Campo>
+        {codigo && <div style={{ flexBasis: '100%' }}><CodigoBarras codigo={codigo} alto={40} /></div>}
         <Campo etiqueta="Unidad base"><select name="unidadBase">{opciones(maestros.unidades, 'codigo', 'codigo')}</select></Campo>
         <Campo etiqueta="Fracción mínima"><input name="fraccionMinima" type="number" step="any" defaultValue="1" /></Campo>
         <Campo etiqueta="Garantía (meses)"><input name="mesesGarantia" type="number" min="1" /></Campo>
@@ -132,35 +141,54 @@ function NuevoProducto({ producto, alGuardar, alCerrar }) {
   );
 }
 
+const nivel = r => {
+  const d = Number(r.disponible), m = Number(r.stockMinimo || 0);
+  if (d <= 0) return ['error', 'Agotado'];
+  if (m && d <= m) return ['aviso', 'Bajo mínimo'];
+  return ['ok', 'Disponible'];
+};
+
 export default function Productos() {
   const [q, setQ] = useState('');
   const [bajo, setBajo] = useState(false);
   const [consulta, setConsulta] = useState({ q: '', bajo: false });
   const [seleccion, setSeleccion] = useState(null);
   const [creando, setCreando] = useState(false);
+  const [etiquetas, setEtiquetas] = useState(null);
   const [filas, recargar, error] = useCarga(
     () => api(`/api/referencias?q=${encodeURIComponent(consulta.q)}&bajoMinimo=${consulta.bajo}`), [consulta]);
+  const ver = f => e => { e.preventDefault(); setSeleccion(f.id); };
   return (
     <>
       <div className="encabezado"><h1>Productos y existencias</h1>
+        {filas?.length > 0 && <Boton clase="secundario" data-a="etiquetas-todas" icono={faBarcode} onClick={() => setEtiquetas(filas)}>Etiquetas de la lista</Boton>}
         {sesion.puede('PRODUCTO_EDITAR') && <Boton data-a="nuevo" icono={faPlus} onClick={() => setCreando(true)}>Nuevo producto</Boton>}</div>
-      <div className="panel fila">
-        <Campo etiqueta="Buscar"><input name="q" size={30} value={q} onChange={e => setQ(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && setConsulta({ q, bajo })} /></Campo>
-        <label><span><input type="checkbox" name="bajo" checked={bajo} onChange={e => setBajo(e.target.checked)} /> Solo bajo el mínimo</span></label>
-        <Boton data-a="buscar" icono={faMagnifyingGlass} onClick={() => setConsulta({ q, bajo })}>Buscar</Boton>
+      <div className="panel">
+        <div className="cabeza-panel fila">
+          <Buscador name="q" placeholder="Buscar por nombre, marca o código" valor={q} alCambiar={setQ} alBuscar={() => setConsulta({ q, bajo })} />
+          <label><span><input type="checkbox" name="bajo" checked={bajo} onChange={e => setBajo(e.target.checked)} /> Solo bajo el mínimo</span></label>
+          <Boton data-a="buscar" clase="secundario" icono={faMagnifyingGlass} onClick={() => setConsulta({ q, bajo })}>Buscar</Boton>
+        </div>
+        <Estado datos={filas} error={error}>
+          <Tabla filas={filas} alElegir={f => setSeleccion(f.id)} columnas={[
+            ['producto', 'Producto', (v, f) => <span className="celda-principal"><span>
+              <a href="#" className="enlace-fila nombre" onClick={ver(f)}>{v}</a><small>{f.marca} · {f.presentacion}</small></span></span>],
+            ['codigoBarras', 'Código', (v, f) => <a href="#" data-a="ver" className="enlace-fila mono" onClick={ver(f)}>{v}</a>],
+            ['disponible', 'Disponible', (v, f) => <span>{num(v)} <small className="suave">{f.unidadBase}</small></span>, 'num'],
+            ['stockMinimo', 'Estado', (v, f) => { const [t, txt] = nivel(f); return <Etiqueta tipo={t}>{txt}</Etiqueta>; }],
+            ['reservada', 'Reservada', num, 'num'], ['danada', 'Dañada', num, 'num'],
+            ['precioVenta', 'Precio sin IVA', dinero, 'num'], ['costoPromedio', 'Costo prom.', dinero, 'num'],
+            ['mesesGarantia', 'Garantía', v => v ? `${v} meses` : ''], ['controlaVencimiento', 'Vence', siNo]]}
+            acciones={f => <button className="icono" data-a="etiqueta" title="Imprimir etiquetas" aria-label="Imprimir etiquetas"
+              onClick={() => setEtiquetas([f])}><Icono i={faBarcode} /></button>} />
+        </Estado>
       </div>
-      <Estado datos={filas} error={error}>
-        <Tabla filas={filas} columnas={[['codigoBarras', 'Código', (v, f) => <a href="#" data-a="ver" onClick={e => { e.preventDefault(); setSeleccion(f.id); }}>{v}</a>],
-          ['producto', 'Producto', (v, f) => <a href="#" onClick={e => { e.preventDefault(); setSeleccion(f.id); }}>{v}</a>], ['marca', 'Marca'], ['presentacion', 'Presentación'], ['unidadBase', 'Unidad'],
-          ['disponible', 'Disponible', num, 'num'], ['reservada', 'Reservada', num, 'num'], ['danada', 'Dañada', num, 'num'],
-          ['precioVenta', 'Precio sin IVA', dinero, 'num'], ['costoPromedio', 'Costo prom.', dinero, 'num'],
-          ['mesesGarantia', 'Garantía', v => v ? `${v} meses` : ''], ['controlaVencimiento', 'Vence', siNo]]} />
-      </Estado>
       {seleccion && <Detalle key={seleccion} id={seleccion} alCambiarPrecio={recargar} alCerrar={() => setSeleccion(null)}
+        alImprimir={r => { setSeleccion(null); setEtiquetas([r]); }}
         alAgregarPresentacion={producto => { setSeleccion(null); setCreando(producto); }} />}
       {creando && <NuevoProducto producto={creando === true ? null : creando} alCerrar={() => setCreando(false)}
         alGuardar={codigo => { setCreando(false); setQ(codigo); setConsulta({ q: codigo, bajo: false }); }} />}
+      {etiquetas && <VentanaEtiquetas referencias={etiquetas} alCerrar={() => setEtiquetas(null)} />}
     </>
   );
 }

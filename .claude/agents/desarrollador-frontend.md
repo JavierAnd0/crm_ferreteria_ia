@@ -10,7 +10,8 @@ token), `src/offline.js` (cola sin internet), `src/componentes.jsx` (Tabla, Boto
 Reglas:
 - Una pantalla nueva es un componente en `src/paginas/`, registrado en `PAGINAS` y en el `MENU` de `App.jsx` con su permiso.
 - Nunca use `dangerouslySetInnerHTML`: React ya escapa los datos.
-- Use `Tabla`, `Boton` (con ícono de `@fortawesome/free-solid-svg-icons`), `useAvisar` y `useAccion`; los textos en
+- Use `Tabla`, `Boton` (con ícono de `@fortawesome/free-solid-svg-icons`), `Etiqueta`, `Avatar`, `Buscador`, `CodigoBarras`,
+  `useAvisar` y `useAccion`; colores y medidas solo con las variables de `app.css` (estilo Materialize, ADR-016); los textos en
   español claro para un vendedor de mostrador. Conserve los selectores `name` y `data-a` que usan las pruebas e2e.
 - Si la pantalla debe funcionar sin internet, use la copia local de `offline.js` y no bloquee la venta.
 - Compile con `cd frontend && npm run build`; si cambia la estrategia de caché, suba la versión en `public/sw.js`.

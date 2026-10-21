@@ -71,6 +71,17 @@ public class CatalogoConsultas {
                 .orElseThrow(() -> new NoEncontradoException("Referencia", id));
     }
 
+    /**
+     * RF-LEC-002: siguiente código interno libre, a partir del mayor código 299… ya registrado. No lo reserva:
+     * si dos personas generan a la vez, la restricción UNIQUE de codigo_barras rechaza al segundo al guardar.
+     */
+    public String siguienteCodigoInterno() {
+        long ultimo = jdbc.sql("""
+                SELECT coalesce(max(substring(codigo_barras FROM 4 FOR 9)::bigint), 0)
+                  FROM referencia WHERE codigo_barras ~ '^299[0-9]{10}$'""").query(Long.class).single();
+        return CodigoBarras.interno(ultimo + 1);
+    }
+
     public ReferenciaResumen porCodigoBarras(String codigo) {
         return jdbc.sql(SELECT_RESUMEN + " WHERE r.codigo_barras = :c " + GROUP).param("c", codigo)
                 .query(ReferenciaResumen.class).optional().map(CatalogoConsultas::ocultarCosto)

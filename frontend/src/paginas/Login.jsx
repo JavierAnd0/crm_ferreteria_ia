@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { faRightToBracket } from '@fortawesome/free-solid-svg-icons';
+import { faRightToBracket, faScrewdriverWrench } from '@fortawesome/free-solid-svg-icons';
 import { api, sesion } from '../api.js';
 import { refrescarCatalogo } from '../offline.js';
-import { Boton, MensajeError, valores } from '../componentes.jsx';
+import { Boton, Icono, MensajeError, valores } from '../componentes.jsx';
 
 export default function Login() {
   const [error, setError] = useState(() => sesion.motivo());
@@ -24,9 +24,11 @@ export default function Login() {
   };
   return (
     <form className="panel login" onSubmit={ingresar} onInput={() => error && setError('')}>
-      <h1>Ingresar</h1>
-      <p><label>Usuario<br /><input name="login" autoComplete="username" required /></label></p>
-      <p><label>Contraseña<br /><input name="contrasena" type="password" autoComplete="current-password" required /></label></p>
+      <div className="marca"><span className="avatar cuadrado"><Icono i={faScrewdriverWrench} /></span>Ferretería</div>
+      <h1>Bienvenido 👋🏻</h1>
+      <p className="suave">Ingrese con su usuario para administrar el inventario.</p>
+      <label>Usuario<input name="login" autoComplete="username" autoFocus required /></label>
+      <label>Contraseña<input name="contrasena" type="password" autoComplete="current-password" required /></label>
       <MensajeError>{error}</MensajeError>
       <Boton icono={faRightToBracket} disabled={enviando}>{enviando ? 'Ingresando…' : 'Ingresar'}</Boton>
     </form>

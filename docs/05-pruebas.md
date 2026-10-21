@@ -75,6 +75,7 @@ Interfaz: 16 pantallas abiertas, venta FE-1 emitida por lector y factura abierta
 | RF-MIG-001 | Validar sin tocar inventario, cargar válidas, rechazar archivo repetido | `MigracionYCierreTest.migraTercerosProductosYSaldosDesdeLaPlantilla` |
 | RF-OFF-001 | Bloque de numeración, reenvío sin duplicar, conflicto sin negativos, equipo no autorizado | `SincronizacionTest` (3 pruebas), `src/test/e2e/sin-internet.mjs` |
 | RF-LEC-001 / RNF-INT-001 | Venta por código de barras con Enter | `src/test/e2e/humo.mjs` |
+| RF-LEC-002 | Dígito de control GS1, código interno libre y 403 sin permiso | `CodigoBarrasTest`, `CatalogoTest` |
 
 ## 5. Lo que estas pruebas no cubren
 

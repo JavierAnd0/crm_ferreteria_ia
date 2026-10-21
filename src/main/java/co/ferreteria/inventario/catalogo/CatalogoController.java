@@ -42,6 +42,13 @@ public class CatalogoController {
         return consultas.porCodigoBarras(codigo);
     }
 
+    /** RF-LEC-002: propone un código EAN-13 interno libre para una referencia sin código del fabricante. */
+    @GetMapping("/referencias/codigo-barras/nuevo")
+    @PreAuthorize("hasAuthority('PRODUCTO_EDITAR')")
+    public Map<String, String> nuevoCodigoBarras() {
+        return Map.of("codigo", consultas.siguienteCodigoInterno());
+    }
+
     @GetMapping("/referencias/{id}")
     public CatalogoConsultas.DetalleReferencia detalle(@PathVariable Integer id) {
         return consultas.detalle(id);

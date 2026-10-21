@@ -222,6 +222,37 @@ Lector conectado al equipo; referencia con código registrado.
 * Un código registrado agrega la referencia correcta a la operación.
 * Un código desconocido se informa y no modifica la operación ni las existencias.
 
+## RF-LEC-002 — Generar e imprimir códigos de barras
+
+### Descripción
+El sistema deberá proponer un código de barras interno para las referencias que no traen código del fabricante (o lo traen repetido, RN-01) e imprimir etiquetas con el código para pegarlas en el producto o en la estantería.
+
+### Actor
+Personal de inventario con permiso `PRODUCTO_EDITAR` (generar); cualquier usuario con sesión (imprimir).
+
+### Prioridad
+Media **[ADOPTADO]**.
+
+### Precondiciones
+Para imprimir, la referencia tiene un código registrado; para generar, el usuario está creando una referencia.
+
+### Flujo principal
+1. Al registrar una referencia, el actor pide «Generar» y el sistema propone el siguiente código interno libre.
+2. El actor guarda la referencia; la unicidad del código la sigue garantizando la base de datos.
+3. Desde el detalle de la referencia o desde la lista de productos, el actor elige copias, tamaño de etiqueta y si muestra el precio con IVA.
+4. El sistema muestra una vista previa y abre la impresión.
+
+### Reglas de negocio
+* Código interno = EAN-13 con prefijo GS1 de circulación restringida 299 + secuencia de 9 dígitos + dígito de control (los datos demo ya usan esta serie) **[ADOPTADO]**.
+* El código propuesto no se reserva: si dos personas generan a la vez, la segunda recibe el aviso de código repetido al guardar y vuelve a generar.
+* Se dibuja como EAN-13 si el código cumple el estándar; cualquier otro código registrado se imprime como Code 128.
+* Tamaños: hoja carta con 3 etiquetas por fila (63 × 30 mm) o rollo térmico de 50 × 25 mm; hasta 500 copias por referencia.
+
+### Criterios de aceptación
+* Dado un catálogo cuyo mayor código interno es 2990000000101, cuando el actor pide generar, entonces recibe 2990000000118 y ninguna referencia lo usa.
+* Dado un usuario sin `PRODUCTO_EDITAR`, cuando pide generar, entonces recibe 403.
+* Dada una referencia con código EAN-13 válido, cuando se imprimen 3 copias, entonces salen 3 etiquetas con nombre, presentación, código legible por el lector y, si se pidió, precio con IVA.
+
 ## RF-TER-001 — Registrar clientes y proveedores
 
 ### Descripción
